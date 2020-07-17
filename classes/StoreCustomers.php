@@ -1,0 +1,328 @@
+<?php
+  class StoreCustomers {
+
+    private $db;
+    private $type;
+    private $table;
+    private $newLine;
+
+    public function __construct($db, $type = 'PF') {
+      $this->db = $db;
+      $this->type = $type;
+      if ($type == 'PF') {
+        $this->table = 'clientes_pf';
+      } else {
+        $this->table = 'clientes_pj';
+      }
+      $this->newLine = "\n";
+    }
+
+    public function storeAll($limit = 0) {
+      $sql = CustomerBaseClass::getCustomerQuery($limit, $this->type, "");
+      $this->storeCustomers($sql, true);
+    }
+
+    public function storeByCustomerId($cod_cli) {
+      $sql = CustomerBaseClass::getCustomerQuery(0, $this->type, $cod_cli);
+      $this->storeCustomers($sql);
+    }
+
+    public function storeByCustomerOrigin($origin, $limit = 0) {
+      $sql = CustomerBaseClass::getCustomerQuery($limit, $this->type, $origin);
+      $this->storeCustomers($sql, true, $origin);
+    }
+
+    public function storeByPeriod($data_start, $data_end, $limit = 0) {
+      $sql = CustomerBaseClass::getCustomerQuery($limit, $this->type, '', $data_start, $data_end);
+      $this->storeCustomers($sql);
+    }
+
+    public function storeErrors($limit = 0) {
+      $sql = CustomerBaseClass::getCustomersWithError($limit, $this->type);
+      $this->storeCustomers($sql);
+    }
+
+    private function storeCustomers($sql, $storeLastCustomer = false, $origin = null) {
+      $errors     = 0;
+      $inserteds  = 0;
+      $updateds   = 0;
+
+      // Auxiliaries
+      $noAddresses  = 0;
+      $invalids     = 0;
+      $customers    = array();
+
+      // Get Data (Customer and Address of them)
+      echo $this->newLine.'BUSCANDO DADOS: '.$this->newLine.$sql.$this->newLine.$this->newLine;
+      $this->db->query($sql);
+      $customers = $this->db->multiple();
+
+      // Processing Customers
+      if (count($customers) > 0) {
+        $total = count($customers);
+        echo '== INICIANDO PROCESSO =='.$this->newLine.$this->newLine;
+        echo "TOTAL DE CLIENTES PARA IMPORTACAO: ".$total.$this->newLine.$this->newLine;
+
+        foreach($customers as $item => $obj) {
+          $porcentagem = (($item+1)*100)/$total;
+          $porcentagem = number_format($porcentagem,2,'.','');
+          echo "[".$porcentagem."%] Código: ".$obj->cod_cli;
+          
+          list($isValid, $noAddress, $insert, $update) = $this->validateAndStoreCustomer($obj);
+
+          // Verifying store
+          if ($isValid) {
+            if ($noAddress) {
+              $noAddress++;
+            } else {
+              // Succeso?
+              if ($insert) {
+                $inserteds++;
+              } else if ($update) {
+                $updateds++;
+              } else {
+                $errors++;
+              }
+
+              // Store Last Customer?
+              if ($storeLastCustomer and ($insert or $update)) {
+                storeLastCode($this->db, $obj->num_ped, $this->type, $origin);
+              }
+            }
+          } else {
+            $invalids++;
+          }
+          echo $this->newLine;
+        }
+
+        // Printing invalids address
+        if ($invalids > 0) {
+          echo $this->newLine.'TOTAL CLIENTES INVALIDOS: '.$invalids.$this->newLine;
+        }
+
+        // Printing invalids address
+        if ($noAddress > 0) {
+          echo $this->newLine.'TOTAL CLIENTES COM ENDERECOS INVALIDOS: '.$invalids.$this->newLine;
+        }
+
+        echo '--------------------------------------------------------------------- '.$this->newLine.$this->newLine;
+      } else {
+        echo 'No customers to add';
+      }
+
+      echo '--------------------------------------------------------------------- '.$this->newLine;
+      echo 'INSERIDOS: '.$inserteds.$this->newLine;
+      echo 'ATUALIZADOS: '.$updateds.$this->newLine;
+      echo 'ERROS: '.$errors.$this->newLine;
+      echo '--------------------------------------------------------------------- '.$this->newLine;
+    }
+
+    private function validateAndStoreCustomer($obj) {
+      // Auxiliaries
+      $insert     = false;
+      $update     = false;
+      $noAddress  = false;
+
+      $obj        = $this->serializeCustomer($obj);
+      $isValid    = $this->validateCustomer($obj);
+      if ($isValid) {
+        $address = $this->getAddressesOfCustomer($obj->cod_cli);
+        if (count($address) > 0) {
+          $obj->addresses = $address;
+
+          // Verifying if it will insert or udpate Customer (getting query)
+          $customerExists = $this->customerExists($obj->cod_cli);
+          if ($customerExists) { // update
+            echo " => UPDATE";
+            $insert       = true;
+            $sqlCustomer  = CustomerBaseClass::getUpdateQuery($this->table, $this->type, $obj);
+          } else { // insert
+            echo " => INSERT";
+            $update       = true;
+            $sqlCustomer  = CustomerBaseClass::getInsertQuery($this->table, $this->type, $obj);
+          }
+          $this->db->query($sqlCustomer);
+          $this->db->execute();
+          $errorQuery = $this->db->error();
+
+          // Store Addresses if no error
+          if (empty($errorQuery)) {
+            $errorQuery = $this->storeCustomerAddresses($obj->cod_cli, $obj->addresses);
+          }
+
+          // Verifying errors after all
+          if (empty($errorQuery)) {
+            if (!empty($obj->customer_error)) {
+              CustomerBaseClass::deleteErrorQuery($obj->cod_cli, $this->db);
+            }
+          } else {
+            $insert = false;
+            $update = false;
+            echo " => ERROR : ".trim($errorQuery)." (".trim($sqlCustomer).')';
+            if (empty($obj->customer_error)) {
+              if ($customerExists) {
+                $typeQuery = 'U';
+              } else {
+                $typeQuery = 'I';
+              }
+              CustomerBaseClass::processingErrorQuery($sqlCustomer, $errorQuery, $typeQuery, $obj->cod_cli, $this->type, $this->db);
+            }
+          }
+        } else {
+          $noAddress = true;
+          echo ' => ENDERECOS INVALIDOS';
+        }
+      }
+      return array($isValid, $noAddress, $insert, $update);
+    }
+
+    private function serializeCustomer($obj) {
+      echo ' => SERIALIZE';
+      $obj->cpf_cnpj_cli      = somenteNumeros(trim($obj->cpf_cnpj_cli));
+      $obj->sex_cli           = normaliza_sexo($obj->sex_cli);
+      $obj->tel_cli           = normaliza_telefone($obj->tel_cli);
+      $obj->cel_cli           = normaliza_telefone($obj->cel_cli);
+      $obj->ema_cli           = normaliza_email($obj->ema_cli);
+      $obj->cli_dthr_cadastro = retornaDataHoraCadastro($obj->dat_cad, $obj->hor_cad);
+      return $obj;
+    }
+
+    private function validateCustomer($obj) {
+      echo ' => VALIDATE';
+      if (strlen(trim($obj->cpf_cnpj_cli)) <= 11) {
+        $isValid = validaCPF(trim($obj->cpf_cnpj_cli));
+        if (!$isValid) {
+          ' => CPF INVALIDO ('.trim($obj->cpf_cnpj_cli).')'.$this->newLine;
+          return false;
+        }
+      } else {
+        $isValid = validaCNPJ(trim($obj->cpf_cnpj_cli));
+        if (!$isValid) {
+          ' => CNPJ INVALIDO ('.trim($obj->cpf_cnpj_cli).')'.$this->newLine;
+          return false;
+        }
+      }
+      return true;
+    }
+
+    private function getAddressesOfCustomer($cod_cli) {
+      // Auxiliaries
+      $cep      = '';
+      $street   = '';
+      $num      = '';
+      $invalids = 0;
+      $address  = array();
+
+      // Table: Clientes
+      $sqlAddressByCustomer = CustomerBaseClass::getAddressQueryByCustomer($cod_cli);
+      $this->db->query($sqlAddressByCustomer);
+      $row = $this->db->single();
+      if ($this->db->rowCount() > 0) {
+        $row = $this->serializeAddress($row);
+        $isValid = $this->validateAddress($row);
+        if ($isValid) {
+          $cep        = trim(strtoupper($row->zipCode));
+          $street     = trim(strtoupper($row->street));
+          $num        = trim(strtoupper($row->number));
+          $address[]  = $row;
+        }
+      }
+      
+      // Table: MDS Address
+      $sqlAddressByAddress= CustomerBaseClass::getAddressQueryByAddress($cod_cli);
+      $this->db->query($sqlAddressByAddress);
+      $row = $this->db->multiple();
+      foreach($row as $item => $obj){
+        $obj = $this->serializeAddress($obj);
+        if ($obj->zipCode != $cep or $obj->street != $street or $obj->number != $num) {
+          $isValid = $this->validateAddress($obj);
+          if ($isValid) {
+            $address[] = $obj;
+          }
+        }
+      }
+
+      return $address;
+    }
+
+    private function serializeAddress($obj) {
+      $obj->street  = trim(strtoupper($obj->street));
+      $obj->number  = trim(strtoupper($obj->number));
+      $obj->zipCode = normalizaCep($obj->zipCode);
+      return $obj;
+    }
+
+    private function validateAddress($obj) {
+      $isValid = validaCep(trim($obj->zipCode));
+      if(!$isValid) {
+        return false;
+      } else {
+        return true;
+      }
+    }
+
+    private function storeCustomerAddresses($cod_cli, $addresses) {
+      $addressTable = $this->table . '_enderecos';
+      $this->deleteCustomerAddresses($cod_cli);
+      foreach ($addresses as $key => $value) {
+        $sqlAddress = "
+          insert into 
+          cdc_data.".trim($addressTable)." 
+          (
+            cli_codigo,
+            cod_end,
+            endereco,
+            bairro,
+            numero,
+            ponto_referencia,
+            complemento,
+            cep,
+            cidade,
+            estado,
+            cod_ibge_municipio,
+            endereco_principal
+          )
+          values(
+              ".$cod_cli.",
+              ".(++$key).",
+              '".$value->street."',
+              '".$value->neighborhood."',
+              '".$value->number."',
+              '".$value->referencePoint."',
+              '".$value->complement."',
+              '".$value->zipCode."',
+              '".$value->city."',
+              '".$value->state."',
+              ".$value->cod_ibge.",
+              ".$value->isDefault."
+          )";
+          $this->db->query($sqlAddress);
+          $this->db->execute();
+          if (!empty($this->db->error())) {
+            $this->deleteCustomerAddresses($cod_cli);
+            return $this->db->error();
+          }
+      }
+      return '';
+    }
+
+    private function deleteCustomerAddresses($cod_cli) {
+      $addressTable = $this->table . '_enderecos';
+      $sqlDelete = 'delete from cdc_data.'.$addressTable.' where cli_codigo = '.$cod_cli;
+      $this->db->query($sqlDelete);
+      $this->db->execute();
+    }
+
+    private function customerExists($cod_cli) {
+      $sql = 'select cli.cli_codigo from cdc_data.'.$this->table.' cli where cli.cli_codigo = :cli_codigo ';
+      $this->db->query($sql);
+      $this->db->bind(':cli_codigo', $cod_cli);
+      $row = $this->db->single();
+      if($this->db->rowCount() > 0){
+        return true;
+      } else {
+        return false;
+      }
+    }
+  }
+?>
