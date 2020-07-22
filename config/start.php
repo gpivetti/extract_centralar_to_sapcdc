@@ -1,6 +1,6 @@
 <?php
   set_time_limit(0) ;
-  ini_set("memory_limit", "24M");
+  ini_set("memory_limit", "78M");
 
   $array_parameters = array();
 
