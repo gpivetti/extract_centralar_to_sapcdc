@@ -23,10 +23,9 @@
       $sql = 'select  ped.num_ped, c.*, '.trim($queryOrigem).',
                       (select cli_codigo from cdc_data.clientes_errors ce where ce.cli_codigo = c.cod_cli limit 1) as customer_error
               from    centralar.pedidos ped
-                      inner join centralar.clientes c on c.cod_cli = ped.cod_cli 
+                      inner join centralar.clientes_cdc c on c.cod_cli = ped.cod_cli 
               where   '.$sqlCustomer.'
                       '.self::getWhereOfQueryByType($type).'
-                      '.self::getBaseOfWhereQuery($date_start, $date_end, $type, $notInserted).'
               group by c.cod_cli 
               order by ped.num_ped 
               '.$sqlLimit;

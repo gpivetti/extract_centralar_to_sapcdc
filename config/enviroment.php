@@ -3,7 +3,7 @@
  * Database Definitions 
  * 
  *  */ 
-define('DB_HOST', '10.10.5.11');
+define('DB_HOST', '104.41.58.21');
 define('DB_PORT', '3306');
 define('DB_USER', 'centralarapp');
 define('DB_PASS', 'C3ntr@l4rApp');
