@@ -1,14 +1,6 @@
 <?php
   set_time_limit(0) ;
   ini_set("memory_limit", "-1");
-  
-  include_once __DIR__.'/definitions.php';
-  include_once __DIR__.'/functions.php';
-  include_once __DIR__.'/database.php';
-  include_once __DIR__.'/../classes/base/CustomerBaseClass.php';
-  include_once __DIR__.'/../classes/base/PartnerBaseClass.php';
-  include_once __DIR__.'/../classes/StoreCustomers.php';
-  include_once __DIR__.'/../classes/StorePartners.php';
 
   $array_parameters = array();
 
@@ -22,4 +14,14 @@
     $parameter = explode('=', $argv[$i]);
     $array_parameters[$parameter[0]] = $parameter[1];
   }
+
+  // Functions and Database
+  include_once __DIR__.'/enviroment.php';
+  include_once __DIR__.'/functions.php';
+  include_once __DIR__.'/database.php';  
+
+  // Loader
+  spl_autoload_register(function($className) {
+    include_once __DIR__ . '/../classes/' . $className . '.php';
+  });
 ?>
