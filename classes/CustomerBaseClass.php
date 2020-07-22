@@ -295,9 +295,9 @@
 
     private static function getWhereOfQueryByType($type) {
       if ($type == 'PF') {
-        return 'length(c.cpf_cnpj_cli) <= 11 and';
+        return 'length(c.cpf_cnpj_cli) <= 11';
       } else {
-        return 'length(c.cpf_cnpj_cli) > 11 and';
+        return 'length(c.cpf_cnpj_cli) > 11';
       }
     }
 
