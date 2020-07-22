@@ -2,10 +2,12 @@
   class CustomerBaseClass {
 
     public static function getCustomerQuery($limit = 0, $type, $customer_or_origin = '', $date_start = '', $date_end = '') {
+      $notInserted = true;
       $sqlLimit    = '';
       $sqlCustomer = '';
       if (!empty($customer_or_origin)) {
         if (is_numeric($customer_or_origin)) {
+          $notInserted = false;
           $queryOrigem = '('.self::getCustomerOriginQuery('c.cod_cli').') as cliente_origem';
           $sqlCustomer = 'c.cod_cli = '.$customer_or_origin.' and ';
         } else {
@@ -24,7 +26,7 @@
                       inner join centralar.clientes c on c.cod_cli = ped.cod_cli 
               where   '.$sqlCustomer.'
                       '.self::getWhereOfQueryByType($type).'
-                      '.self::getBaseOfWhereQuery($date_start, $date_end, $type).'
+                      '.self::getBaseOfWhereQuery($date_start, $date_end, $type, $notInserted).'
               group by c.cod_cli 
               order by ped.num_ped 
               '.$sqlLimit;
@@ -300,7 +302,7 @@
       }
     }
 
-    private static function getBaseOfWhereQuery($date_start = '', $date_end = '', $type = '') {
+    private static function getBaseOfWhereQuery($date_start = '', $date_end = '', $type = '', $notInserted = true) {
       if (empty($date_start) or (!empty($date_start) and $date_start < BASE_DATE)) {
         $date_start = BASE_DATE;
       }
@@ -316,14 +318,14 @@
       }
       return 'c.cliente_teste != "S"
               and ped.sta_ped in ("P","F","D","E")
-              and c.cod_cli not in (
+              '.($notInserted ? 'and c.cod_cli not in (
                 select cli_codigo from cdc_data.'.$table.' cp where cp.cli_codigo = c.cod_cli
-              )
+              )' : '').'
               and '.trim($whereDate);
     }
 
     public function deleteErrorQuery($cod_cli, $db) {
-      $sqlDelete = 'delete from cdc_data.clientes_errors where cli_codigo = '.$obj->cod_cli;
+      $sqlDelete = 'delete from cdc_data.clientes_errors where cli_codigo = '.$cod_cli;
       $db->query($sqlDelete);
       $db->execute();
     }
