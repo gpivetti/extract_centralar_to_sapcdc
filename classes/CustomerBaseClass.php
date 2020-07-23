@@ -15,7 +15,7 @@
                           and c.cod_cli not in (
                             select cod_cli from centralar.clientes_cdc cdc where cdc.cod_cli = c.cod_cli
                           )
-                          and ped.dat_ped >= '.BASE_DATE.'
+                          and ped.dat_ped >= "'.BASE_DATE.'"
                 group by c.cod_cli 
                 order by ped.num_ped
                 '.$sqlLimit;
