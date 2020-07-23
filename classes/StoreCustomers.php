@@ -48,9 +48,9 @@
       $this->db->execute(); 
       $errorQuery = $this->db->error();
       if (empty($errorQuery)) {
-        echo $this->newLine.$this->newLine.'SUCESSO';
+        echo $this->newLine.$this->newLine.'SUCESSO'.$this->newLine;
       } else {
-        echo $this->newLine.$this->newLine.$errorQuery;
+        echo $this->newLine.$this->newLine.$errorQuery.$this->newLine;
       }
     }
 
