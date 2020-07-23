@@ -1,5 +1,5 @@
 <?php
-  include __DIR__.'/../config/start.php';
+  include __DIR__.'/config/start.php';
 
   // Verifying limit
   if (isset($array_parameters['limit']) and 
