@@ -339,7 +339,7 @@
       $sql = 'update centralar.clientes_cd set  = "S" where cod_cli = '.$cod_cli;
       $db->query($sql);
       $db->execute();
-      echo 'ERROR: '.$this->db->error();
+      echo 'ERROR: '.$db->error();
     }
 
     public function processingErrorQuery($sqlCustomer, $error, $typeQuery, $cod_cli, $typePerson, $db) {
