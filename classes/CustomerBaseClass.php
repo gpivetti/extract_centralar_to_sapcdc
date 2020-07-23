@@ -46,6 +46,7 @@
               where   '.$sqlCustomer.'
                       '.self::getWhereOfQueryByType($type).'
                       '.self::getWhereOfQueryByPeriod($date_start, $date_end).'
+                      and c.higienizado = "N"
               group by c.cod_cli 
               order by ped.num_ped 
               '.$sqlLimit;
