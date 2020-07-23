@@ -1,13 +1,32 @@
 <?php
   class CustomerBaseClass {
 
+    public static function getCustomerToConvertQuery() {
+      $queryOrigem = '('.self::getCustomerOriginQuery('c.cod_cli').')';
+      if ($limit > 0) {
+        $sqlLimit = 'limit '.$limit;
+      }      
+      $sql = 'insert into clientes_cdc 
+                select  	c.*, '.$queryOrigem.'
+                from    	centralar.pedidos ped
+                          inner join centralar.clientes c on c.cod_cli = ped.cod_cli 
+                where   	c.cliente_teste != "S"
+                          and ped.sta_ped in ("P","F","D","E")
+                          and c.cod_cli not in (
+                            select cod_cli from centralar.clientes_cdc cdc where cdc.cod_cli = c.cod_cli
+                          )
+                          and ped.dat_ped >= '.BASE_DATE.'
+                group by c.cod_cli 
+                order by ped.num_ped
+                '.$sqlLimit;
+      return $sql;
+    }
+
     public static function getCustomerQuery($limit = 0, $type, $customer_or_origin = '', $date_start = '', $date_end = '') {
-      $notInserted = true;
       $sqlLimit    = '';
       $sqlCustomer = '';
       if (!empty($customer_or_origin)) {
         if (is_numeric($customer_or_origin)) {
-          $notInserted = false;
           $queryOrigem = '('.self::getCustomerOriginQuery('c.cod_cli').') as cliente_origem';
           $sqlCustomer = 'c.cod_cli = '.$customer_or_origin.' and ';
         } else {
@@ -26,7 +45,7 @@
                       inner join centralar.clientes_cdc c on c.cod_cli = ped.cod_cli 
               where   '.$sqlCustomer.'
                       '.self::getWhereOfQueryByType($type).'
-                      '.self::getBaseOfWhereQuery($date_start, $date_end, $type, $notInserted).'
+                      '.self::getWhereOfQueryByPeriod($date_start, $date_end).'
               group by c.cod_cli 
               order by ped.num_ped 
               '.$sqlLimit;
@@ -302,7 +321,7 @@
       }
     }
 
-    private static function getBaseOfWhereQuery($date_start = '', $date_end = '', $type = '', $notInserted = true) {
+    private static function getWhereOfQueryByPeriod($date_start = '', $date_end = '') {
       if (empty($date_start) or (!empty($date_start) and $date_start < BASE_DATE)) {
         $date_start = BASE_DATE;
       }
@@ -311,17 +330,7 @@
       } else {
         $whereDate = "ped.dat_ped >= '".$date_start."'";
       }
-      if ($type == 'PF') {
-        $table = 'clientes_pf';
-      } else {
-        $table = 'clientes_pj';
-      }
-      return 'c.cliente_teste != "S"
-              and ped.sta_ped in ("P","F","D","E")
-              '.($notInserted ? 'and c.cod_cli not in (
-                select cli_codigo from cdc_data.'.$table.' cp where cp.cli_codigo = c.cod_cli
-              )' : '').'
-              and '.trim($whereDate);
+      return trim($whereDate);
     }
 
     public function deleteErrorQuery($cod_cli, $db) {

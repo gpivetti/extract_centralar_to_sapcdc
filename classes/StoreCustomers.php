@@ -42,6 +42,11 @@
       $this->storeCustomers($sql);
     }
 
+    public function convertCustomers($limit = 0) {
+      $sql = CustomerBaseClass::getCustomerToConvertQuery($limit);
+      echo $sql;
+    }
+
     private function storeCustomers($sql, $storeLastCustomer = false, $origin = null) {
       $errors     = 0;
       $inserteds  = 0;
