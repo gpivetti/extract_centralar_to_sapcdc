@@ -159,8 +159,8 @@
 
           // Verifying errors after all
           if (empty($errorQuery)) {
-            if (!empty($obj->customer_error)) {
-              CustomerBaseClass::changeToHiginized($obj->cod_cli, $this->db);
+            CustomerBaseClass::changeToHiginized($obj->cod_cli, $this->db);
+            if (!empty($obj->customer_error)) {              
               CustomerBaseClass::deleteErrorQuery($obj->cod_cli, $this->db);
             }
           } else {
