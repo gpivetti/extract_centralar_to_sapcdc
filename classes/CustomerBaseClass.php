@@ -27,19 +27,15 @@
       $sqlCustomer = '';
       if (!empty($customer_or_origin)) {
         if (is_numeric($customer_or_origin)) {
-          $queryOrigem = '('.self::getCustomerOriginQuery('c.cod_cli').') as cliente_origem';
           $sqlCustomer = 'c.cod_cli = '.$customer_or_origin.' and ';
         } else {
-          $queryOrigem = '"'.trim(strtoupper($customer_or_origin)) . '" as cliente_origem';
-          $sqlCustomer = '('.self::getCustomerOriginQuery('c.cod_cli').') = "'.trim($customer_or_origin).'" and ';
+          $sqlCustomer = 'c.cliente_origem = "'.trim(strtoupper($customer_or_origin)).'" and ';
         }
-      } else {
-        $queryOrigem = '('.self::getCustomerOriginQuery('c.cod_cli').') as cliente_origem';
       }
       if ($limit > 0) {
         $sqlLimit = 'limit '.$limit;
       }
-      $sql = 'select  ped.num_ped, c.*, '.trim($queryOrigem).',
+      $sql = 'select  ped.num_ped, c.*
                       (select cli_codigo from cdc_data.clientes_errors ce where ce.cli_codigo = c.cod_cli limit 1) as customer_error
               from    centralar.pedidos ped
                       inner join centralar.clientes_cdc c on c.cod_cli = ped.cod_cli 
@@ -54,15 +50,14 @@
     }
 
     public static function getCustomersWithError($limit = 0, $type) {
-      $queryOrigem = '('.self::getCustomerOriginQuery('c.cod_cli').') as cliente_origem';
       if ($limit > 0) {
         $sqlLimit = 'limit '.$limit;
       } else {
         $sqlLimit = '';
       }
-      $sql = 'select    c.*, '.trim($queryOrigem).', ce.cli_codigo as customer_error
+      $sql = 'select    c.*, ce.cli_codigo as customer_error
               from      cdc_data.clientes_errors ce
-                        inner join centralar.clientes c on c.cod_cli = ce.cli_codigo 
+                        inner join centralar.clientes_cdc c on c.cod_cli = ce.cli_codigo 
               where     typePerson = "'.$type.'"
               order by  cli_codigo 
               '.$sqlLimit;
@@ -337,6 +332,12 @@
     public function deleteErrorQuery($cod_cli, $db) {
       $sqlDelete = 'delete from cdc_data.clientes_errors where cli_codigo = '.$cod_cli;
       $db->query($sqlDelete);
+      $db->execute();
+    }
+
+    public function changeToHiginized($cod_cli, $db) {
+      $sql = 'update centralar.clientes_cd set  = "S" where cod_cli = '.$cod_cli;
+      $db->query($sql);
       $db->execute();
     }
 
