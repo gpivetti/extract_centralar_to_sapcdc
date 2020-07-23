@@ -7,7 +7,7 @@
         $sqlLimit = 'limit '.$limit;
       }      
       $sql = 'insert into clientes_cdc 
-                select  	c.*, '.$queryOrigem.'
+                select  	c.*, '.$queryOrigem.', "N"
                 from    	centralar.pedidos ped
                           inner join centralar.clientes c on c.cod_cli = ped.cod_cli 
                 where   	c.cliente_teste != "S"
