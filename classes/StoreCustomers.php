@@ -43,8 +43,15 @@
     }
 
     public function convertCustomers($limit = 0) {
-      $sql = CustomerBaseClass::getCustomerToConvertQuery($limit);
-      echo $sql;
+      echo $sql = CustomerBaseClass::getCustomerToConvertQuery($limit);
+      $this->db->query($sql);
+      $this->db->execute(); 
+      $errorQuery = $this->db->error();
+      if (empty($errorQuery)) {
+        echo $this->newLine.$this->newLine.'SUCESSO';
+      } else {
+        echo $this->newLine.$this->newLine.$errorQuery;
+      }
     }
 
     private function storeCustomers($sql, $storeLastCustomer = false, $origin = null) {
