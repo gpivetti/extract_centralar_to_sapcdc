@@ -26,6 +26,7 @@
                       inner join centralar.clientes_cdc c on c.cod_cli = ped.cod_cli 
               where   '.$sqlCustomer.'
                       '.self::getWhereOfQueryByType($type).'
+                      '.self::getBaseOfWhereQuery($date_start, $date_end, $type, $notInserted).'
               group by c.cod_cli 
               order by ped.num_ped 
               '.$sqlLimit;
@@ -295,9 +296,9 @@
 
     private static function getWhereOfQueryByType($type) {
       if ($type == 'PF') {
-        return 'length(c.cpf_cnpj_cli) <= 11';
+        return 'length(c.cpf_cnpj_cli) <= 11 and';
       } else {
-        return 'length(c.cpf_cnpj_cli) > 11';
+        return 'length(c.cpf_cnpj_cli) > 11 and';
       }
     }
 
