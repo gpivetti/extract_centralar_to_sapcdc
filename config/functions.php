@@ -230,31 +230,4 @@ function getGUID() {
     return $uuid;
   } 
 }
-
-function storeLastCode($db, $code, $type, $origin = null) {
-  // Type
-  if ($type == 'PF') {
-    $column = 'lastCodeCustomerPF = '.$code;
-  } else if ($type == 'PJ') {
-    $column = 'lastCodeCustomerPJ = '.$code;
-  } else {
-    $column = 'lastCodePartner = '.$code;
-  }
-
-  // Origin
-  if ($origin == "B2C") {
-    $id = 2;
-  } else if ($origin == "B2B") {
-    $id = 3;
-  } else if ($origin == "MARKETPLACE") {
-    $id = 4;
-  } else {
-    $id = 1;
-  } 
-  
-  // Updating
-  $sql = 'update cdc_data.administrative set '.$column.' where id = '.$id;
-  $db->query($sql);
-  $db->execute();    
-} 
 ?>

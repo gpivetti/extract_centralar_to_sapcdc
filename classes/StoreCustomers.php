@@ -19,7 +19,7 @@
 
     public function storeAll($limit = 0) {
       $sql = CustomerBaseClass::getCustomerQuery($limit, $this->type, "");
-      $this->storeCustomers($sql, true);
+      $this->storeCustomers($sql);
     }
 
     public function storeByCustomerId($cod_cli) {
@@ -29,7 +29,7 @@
 
     public function storeByCustomerOrigin($origin, $limit = 0) {
       $sql = CustomerBaseClass::getCustomerQuery($limit, $this->type, $origin);
-      $this->storeCustomers($sql, true, $origin);
+      $this->storeCustomers($sql, $origin);
     }
 
     public function storeByPeriod($data_start, $data_end, $limit = 0) {
@@ -54,7 +54,7 @@
       }
     }
 
-    private function storeCustomers($sql, $storeLastCustomer = false, $origin = null) {
+    private function storeCustomers($sql, $origin = null) {
       $errors     = 0;
       $inserteds  = 0;
       $updateds   = 0;
@@ -94,11 +94,6 @@
                 $updateds++;
               } else {
                 $errors++;
-              }
-
-              // Store Last Customer?
-              if ($storeLastCustomer and ($insert or $update)) {
-                storeLastCode($this->db, $obj->num_ped, $this->type, $origin);
               }
             }
           } else {
