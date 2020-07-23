@@ -336,7 +336,7 @@
     }
 
     public function changeToHiginized($cod_cli, $db) {
-      $sql = 'update centralar.clientes_cd set higienizado = "S" where cod_cli = '.$cod_cli;
+      $sql = 'update centralar.clientes_cdc set higienizado = "S" where cod_cli = '.$cod_cli;
       $db->query($sql);
       $db->execute();
       echo 'ERROR: '.$db->error();
