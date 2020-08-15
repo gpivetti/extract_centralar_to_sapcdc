@@ -37,24 +37,22 @@
       $sqlCustomer = '';
       if (!empty($customer_or_origin)) {
         if (is_numeric($customer_or_origin)) {
-          $sqlCustomer = 'c.cod_cli = '.$customer_or_origin.' and ';
+          $sqlCustomer = 'c.cod_cli = '.$customer_or_origin;
         } else {
-          $sqlCustomer = 'c.cliente_origem = "'.trim(strtoupper($customer_or_origin)).'" and ';
+          $sqlCustomer = 'c.cliente_origem = "'.trim(strtoupper($customer_or_origin)).'"';
         }
       }
       if ($limit > 0) {
         $sqlLimit = 'limit '.$limit;
       }
-      $sql = 'select  ped.num_ped, c.*,
+      $sql = 'select  c.*,
                       (select cli_codigo from cdc_data.clientes_errors ce where ce.cli_codigo = c.cod_cli limit 1) as customer_error
-              from    centralar.pedidos ped
-                      inner join centralar.clientes_cdc c on c.cod_cli = ped.cod_cli 
+              from    centralar.clientes_cdc c
               where   '.$sqlCustomer.'
                       '.self::getWhereOfQueryByType($type).'
                       '.self::getWhereOfQueryByPeriod($date_start, $date_end).'
                       and c.higienizado = "N"
-              group by c.cod_cli 
-              order by ped.num_ped 
+              order by c.cod_cli 
               '.$sqlLimit;
       return $sql;
     }
@@ -321,22 +319,32 @@
 
     private static function getWhereOfQueryByType($type) {
       if ($type == 'PF') {
-        return 'length(c.cpf_cnpj_cli) <= 11 and';
+        return 'and length(c.cpf_cnpj_cli) <= 11';
       } else {
-        return 'length(c.cpf_cnpj_cli) > 11 and';
+        return 'and length(c.cpf_cnpj_cli) > 11';
       }
     }
 
     private static function getWhereOfQueryByPeriod($date_start = '', $date_end = '') {
-      if (empty($date_start) or (!empty($date_start) and $date_start < BASE_DATE)) {
-        $date_start = BASE_DATE;
-      }
-      if (!empty($date_end)){
-        $whereDate = "ped.dat_ped BETWEEN '".$date_start."' and '".$date_end."'";
+      if (!empty($date_start) or !empty($date_end)) {
+        if (empty($date_start) or (!empty($date_start) and $date_start < BASE_DATE)) {
+          $date_start = BASE_DATE;
+        }        
+        if (!empty($date_end)){
+          $date = "ped.dat_ped BETWEEN '".$date_start."' and '".$date_end."'";
+        } else {
+          $date = "ped.dat_ped >= '".$date_start."'";
+        }
+        return 'and c.cod_cli in (
+                  select 	ped.cod_cli 
+                  from	  centralar.pedidos ped
+                  where	  ped.sta_ped in ("P","F","D","E")
+                          and '.trim($date).'
+                          and ped.cod_cli = c.cod_cli
+                )';
       } else {
-        $whereDate = "ped.dat_ped >= '".$date_start."'";
+        return '';
       }
-      return trim($whereDate);
     }
 
     public function deleteErrorQuery($cod_cli, $db) {
