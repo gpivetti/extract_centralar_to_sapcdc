@@ -2,23 +2,33 @@
   class CustomerBaseClass {
 
     public static function getCustomerToConvertQuery() {
-      $queryOrigem = '('.self::getCustomerOriginQuery('c.cod_cli').')';
+      $queryOrigem = '('.self::getCustomerOriginQuery('cli.cod_cli').')';
       if ($limit > 0) {
         $sqlLimit = 'limit '.$limit;
       }      
       $sql = 'insert into clientes_cdc 
-                select  	c.*, '.$queryOrigem.', "N"
-                from    	centralar.pedidos ped
-                          inner join centralar.clientes c on c.cod_cli = ped.cod_cli 
-                where   	c.cliente_teste != "S"
-                          and ped.sta_ped in ("P","F","D","E")
-                          and c.cod_cli not in (
-                            select cod_cli from centralar.clientes_cdc cdc where cdc.cod_cli = c.cod_cli
-                          )
-                          and ped.dat_ped >= "'.BASE_DATE.'"
-                group by c.cod_cli 
-                order by ped.num_ped
-                '.$sqlLimit;
+              select	cli.*, '.$queryOrigem.', "N"
+              from	  centralar.clientes cli
+                      inner join(
+                        select  	max(c.cod_cli) as cod_cli
+                        from    	centralar.clientes c
+                        where   	c.cliente_teste != "S"
+                                  and c.keyTOTVS != ""
+                                  and not c.keyTOTVS is null
+                                  and c.cod_cli in (
+                                    select 	ped.cod_cli 
+                                    from	  centralar.pedidos ped
+                                    where	  ped.sta_ped in ("P","F","D","E")
+                                            and ped.dat_ped >= "'.BASE_DATE.'"
+                                            and ped.cod_cli = c.cod_cli
+                                  )	          	
+                                  and c.cod_cli not in (
+                                    select cod_cli from centralar.clientes_cdc cdc where cdc.cod_cli = c.cod_cli
+                                  )
+                        group by 	c.keyTOTVS
+                      ) as CLIENTES on cli.cod_cli = CLIENTES.cod_cli
+              order by cli.cod_cli
+              '.$sqlLimit;
       return $sql;
     }
 

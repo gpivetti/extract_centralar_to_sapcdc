@@ -188,10 +188,15 @@
       echo ' => SERIALIZE';
       $obj->cpf_cnpj_cli      = somenteNumeros(trim($obj->cpf_cnpj_cli));
       $obj->sex_cli           = normaliza_sexo($obj->sex_cli);
-      $obj->tel_cli           = normaliza_telefone($obj->tel_cli);
-      $obj->cel_cli           = normaliza_telefone($obj->cel_cli);
+      $obj->sen_cli           = normaliza_senha($obj->sen_cli);
+      $obj->tel_cli           = normaliza_telefone($obj->tel_cli, 'T');
+      $obj->cel_cli           = normaliza_telefone($obj->cel_cli, 'M');
       $obj->ema_cli           = normaliza_email($obj->ema_cli);
       $obj->cli_dthr_cadastro = retornaDataHoraCadastro($obj->dat_cad, $obj->hor_cad);
+      $obj->dat_nas_cli       = normaliza_data($obj->dat_nas_cli);
+      if (empty($obj->tel_cli) and empty($obj->cel_cli)) {
+        $obj->tel_cli = '1136363636';
+      }
       return $obj;
     }
 

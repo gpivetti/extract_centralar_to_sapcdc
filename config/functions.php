@@ -64,26 +64,60 @@ function retornaFirstStringFromSplit($stringIn = '', $splitter = '') {
   return $string;
 }
 
-function normaliza_telefone($telefoneString = '') {
-  $telefone = retiraZeroIniciais(somenteNumeros(trim($telefoneString)));		
-  if (strlen(trim($telefone)) > 15) {
+function normaliza_telefone($telefoneString = '', $type = 'T') {  
+  $telefone = retiraZeroIniciais(somenteNumeros(trim($telefoneString)));
+  $telefone = trim($telefone);
+  if (
+    ($type == 'T' and strlen(trim($telefone)) >= 11) or
+    ($type == 'M' and strlen(trim($telefone)) >= 12)
+  ) {
     $tel = trim($telefone);
     if (substr($tel,0,2) == substr($tel,2,2)) {
       $tel = trim(substr($tel,2));
     }
-    $telefone = trim($tel);
+    $telefone = trim(substr(trim($tel), 0, 11));
   }
-  return trim(substr($telefone, 0, 15));
+  if (strlen(trim($telefone)) >= 10) {
+    if ($type == 'M' and strlen(trim($telefone)) == 10) {
+      $telefone = $telefone . '0';
+    }
+    return trim(substr(trim($telefone), 0, 11));
+  } 
+  else {
+    return '';
+  }
 }
 
 function normaliza_sexo($sexoString = '') {
   $sexo = trim(strtoupper($sexoString));
-  if ($sexo != 'M' and $sexo != 'F') {
-    $sexo = '';
+  if (empty($sexo) or ($sexo != 'M' and $sexo != 'F')) {
+    $sexo = 'M';
   } else {
     $sexo = trim($sexo);
   }
   return $sexo;
+}
+
+function normaliza_senha($senha = '') {
+  $senha = trim($senha);
+  if (empty($senha) or strlen(trim($senha)) < 3) {
+    $senha = '@senha';
+  } else {
+    $senha = trim($senha);
+  }
+  return $senha;
+}
+
+function normaliza_data($dat_nas_cli = '') {
+  if (empty($dat_nas_cli)) {
+    return '1970-01-01';
+  } 
+  else if ($dat_nas_cli >= date('Y-m-d')) {
+    $date_array = explode('-', $dat_nas_cli);
+    return '1970-'.$date_array[1].'-'.$date_array[2];
+  } else {
+    return $dat_nas_cli;
+  }
 }
 
 function normaliza_email($emailString = '') {
