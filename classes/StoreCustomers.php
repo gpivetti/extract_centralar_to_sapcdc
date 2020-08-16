@@ -232,9 +232,9 @@
       }
 
       // invalid e-mail
-      $isValid = validaCPF(trim($obj->cpf_cnpj_cli));
+      $isValid = validaEmail(trim($obj->ema_cli));
       if (!$isValid) {
-        echo ' => CPF INVALIDO ('.trim($obj->cpf_cnpj_cli).')'.$this->newLine;
+        echo ' => EMAIL INVALIDO ('.trim($obj->ema_cli).')'.$this->newLine;
         return false;
       }      
 
