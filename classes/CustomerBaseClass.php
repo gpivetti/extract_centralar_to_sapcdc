@@ -41,22 +41,23 @@
       $sqlCustomer = '';
       if (!empty($customer_or_origin)) {
         if (is_numeric($customer_or_origin)) {
-          $sqlCustomer = 'c.cod_cli = '.$customer_or_origin;
+          $sqlCustomer = 'cli_cdc.cod_cli = '.$customer_or_origin. ' and ';
         } else {
-          $sqlCustomer = 'c.cliente_origem = "'.trim(strtoupper($customer_or_origin)).'"';
+          $sqlCustomer = 'cli_cdc.cliente_origem = "'.trim(strtoupper($customer_or_origin)).'" and ';
         }
       }
       if ($limit > 0) {
         $sqlLimit = 'limit '.$limit;
       }
-      $sql = 'select  c.*,
-                      (select cli_codigo from cdc_data.clientes_errors ce where ce.cli_codigo = c.cod_cli limit 1) as customer_error
-              from    centralar.clientes_cdc c
-              where   '.$sqlCustomer.'
-                      '.self::getWhereOfQueryByType($type).'
-                      '.self::getWhereOfQueryByPeriod($date_start, $date_end).'
-                      and c.higienizado = "N"
-              order by c.cod_cli 
+      $sql = 'select    cli.*,
+                        (select cli_codigo from cdc_data.clientes_errors ce where ce.cli_codigo = cli_cdc.cod_cli limit 1) as customer_error
+              from      centralar.clientes_cdc cli_cdc
+                        inner join centralar.clientes cli on cli.cod_cli = cli_cdc.cod_cli
+              where     '.$sqlCustomer.'
+                        '.self::getWhereOfQueryByType($type).'
+                        '.self::getWhereOfQueryByPeriod($date_start, $date_end).'
+                        cli_cdc.higienizado = "N"
+              order by  cli_cdc.cod_cli 
               '.$sqlLimit;
       return $sql;
     }
@@ -323,9 +324,9 @@
 
     private static function getWhereOfQueryByType($type) {
       if ($type == 'PF') {
-        return 'and length(c.cpf_cnpj_cli) <= 11';
+        return 'length(cli.cpf_cnpj_cli) <= 11 and ';
       } else {
-        return 'and length(c.cpf_cnpj_cli) > 11';
+        return 'length(cli.cpf_cnpj_cli) > 11 and ';
       }
     }
 
@@ -339,13 +340,13 @@
         } else {
           $date = "ped.dat_ped >= '".$date_start."'";
         }
-        return 'and c.cod_cli in (
+        return 'cli_cdc.cod_cli in (
                   select 	ped.cod_cli 
                   from	  centralar.pedidos ped
                   where	  ped.sta_ped in ("P","F","D","E")
                           and '.trim($date).'
-                          and ped.cod_cli = c.cod_cli
-                )';
+                          and ped.cod_cli = cli_cdc.cod_cli
+                ) and ';
       } else {
         return '';
       }
