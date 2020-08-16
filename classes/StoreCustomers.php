@@ -192,29 +192,56 @@
       $obj->tel_cli           = normaliza_telefone($obj->tel_cli, 'T');
       $obj->cel_cli           = normaliza_telefone($obj->cel_cli, 'M');
       $obj->ema_cli           = normaliza_email($obj->ema_cli);
+      $obj->dat_cad           = normaliza_data_cadastro($obj->dat_cad);
       $obj->cli_dthr_cadastro = retornaDataHoraCadastro($obj->dat_cad, $obj->hor_cad);
-      $obj->dat_nas_cli       = normaliza_data($obj->dat_nas_cli);
+      $obj->dat_nas_cli       = normaliza_data_nascimento($obj->dat_nas_cli, $obj->dat_cad);
+
+      // Return other phones whether tel_cli and cel_cli are empty
       if (empty($obj->tel_cli) and empty($obj->cel_cli)) {
-        $obj->tel_cli = '1136363636';
+        if (!empty($obj->tel_com_cli)) {
+          $obj->tel_cli = normaliza_telefone($obj->tel_com_cli, 'T');
+        } else if(!empty($obj->fax_cli)) {
+          $obj->tel_cli = normaliza_telefone($obj->fax_cli, 'T');
+        }
+
+        // Default phone
+        if (empty($obj->tel_cli)) {
+          $obj->tel_cli = '1136363636';  
+        }
       }
+
       return $obj;
     }
 
     private function validateCustomer($obj) {
       echo ' => VALIDATE';
+
+      // invalid CPF or CNPJ
       if (strlen(trim($obj->cpf_cnpj_cli)) <= 11) {
         $isValid = validaCPF(trim($obj->cpf_cnpj_cli));
         if (!$isValid) {
-          ' => CPF INVALIDO ('.trim($obj->cpf_cnpj_cli).')'.$this->newLine;
+          echo ' => CPF INVALIDO ('.trim($obj->cpf_cnpj_cli).')'.$this->newLine;
           return false;
         }
       } else {
         $isValid = validaCNPJ(trim($obj->cpf_cnpj_cli));
         if (!$isValid) {
-          ' => CNPJ INVALIDO ('.trim($obj->cpf_cnpj_cli).')'.$this->newLine;
+          echo ' => CNPJ INVALIDO ('.trim($obj->cpf_cnpj_cli).')'.$this->newLine;
           return false;
         }
       }
+
+      // invalid e-mail
+      $isValid = validaCPF(trim($obj->cpf_cnpj_cli));
+      if (!$isValid) {
+        echo ' => CPF INVALIDO ('.trim($obj->cpf_cnpj_cli).')'.$this->newLine;
+        return false;
+      }      
+
+      // repeated cpf
+
+      // repeated e-mail
+
       return true;
     }
 

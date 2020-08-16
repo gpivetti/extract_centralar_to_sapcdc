@@ -108,11 +108,24 @@ function normaliza_senha($senha = '') {
   return $senha;
 }
 
-function normaliza_data($dat_nas_cli = '') {
-  if (empty($dat_nas_cli)) {
+function normaliza_data_cadastro($dat_cad = '') {
+  if (empty($dat_cad) or $dat_cad == '0000-00-00') {
+    return date('Y-m-d');
+  } else {
+    return $dat_cad;
+  }
+}
+
+function normaliza_data_nascimento($dat_nas_cli = '', $date_reference = '') {
+  $dat_nas_cli = trim($dat_nas_cli);  
+  if (empty($dat_nas_cli) or $dat_nas_cli == '0000-00-00') {
     return '1970-01-01';
-  } 
-  else if ($dat_nas_cli >= date('Y-m-d')) {
+  }
+  $date_reference = trim($date_reference);
+  if (empty($date_reference) or $date_reference == '0000-00-00') {
+    $date_reference = date('Y-m-d');
+  }
+  else if ($dat_nas_cli >= $date_reference) {
     $date_array = explode('-', $dat_nas_cli);
     return '1970-'.$date_array[1].'-'.$date_array[2];
   } else {
@@ -172,7 +185,8 @@ function normalizaCep($cep = null) {
 }
 
 function validaEmail($email) {
-  if (!filter_var($email, FILTER_VALIDATE_EMAIL) or empty($email)) {
+  $email = trim($email);
+  if (empty($email) or !filter_var($email, FILTER_VALIDATE_EMAIL) or empty($email)) {
     return false;
   } else {
     return true;
