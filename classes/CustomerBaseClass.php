@@ -15,6 +15,10 @@
                         where   	c.cliente_teste != "S"
                                   and c.keyTOTVS != ""
                                   and not c.keyTOTVS is null
+                                  and c.ema_cli != ""
+                                  and not c.ema_cli is null
+                                  and c.cpf_cnpj_cli != ""
+                                  and not c.cpf_cnpj_cli is null                                  
                                   and c.cod_cli in (
                                     select 	ped.cod_cli 
                                     from	  centralar.pedidos ped
@@ -380,5 +384,17 @@
       $db->query($sqlError);
       $db->execute();
     }
+
+    private function cpfOrcnpjExists($cod_cli, $cpf_cnpj) {
+      $sql = 'select cli.cli_codigo from cdc_data.'.$this->table.' cli where cli. cli.cli_codigo != :cli_codigo ';
+      $this->db->query($sql);
+      $this->db->bind(':cli_codigo', $cod_cli);
+      $row = $this->db->single();
+      if($this->db->rowCount() > 0){
+        return true;
+      } else {
+        return false;
+      }
+    }    
   }
 ?>
