@@ -353,19 +353,19 @@
       }
     }
 
-    public function deleteErrorQuery($cod_cli, $db) {
+    public static function deleteErrorQuery($cod_cli, $db) {
       $sqlDelete = 'delete from cdc_data.clientes_errors where cli_codigo = '.$cod_cli;
       $db->query($sqlDelete);
       $db->execute();
     }
 
-    public function changeToHiginized($cod_cli, $db) {
+    public static function changeToHiginized($cod_cli, $db) {
       $sql = 'update centralar.clientes_cdc set higienizado = "S" where cod_cli = '.$cod_cli;
       $db->query($sql);
       $db->execute();
     }
 
-    public function processingErrorQuery($sqlCustomer, $error, $typeQuery, $cod_cli, $typePerson, $db) {
+    public static function processingErrorQuery($sqlCustomer, $error, $typeQuery, $cod_cli, $typePerson, $db) {
       $sqlError = "
         insert into 
         cdc_data.clientes_errors 
@@ -387,16 +387,52 @@
       $db->execute();
     }
 
-    private function cpfOrcnpjExists($cod_cli, $cpf_cnpj) {
-      $sql = 'select cli.cli_codigo from cdc_data.'.$this->table.' cli where cli. cli.cli_codigo != :cli_codigo ';
-      $this->db->query($sql);
-      $this->db->bind(':cli_codigo', $cod_cli);
-      $row = $this->db->single();
-      if($this->db->rowCount() > 0){
+    private static function cpfExists($cod_cli, $cpf, $db) {
+      $sql = 'select  cli.cli_codigo 
+              from    cdc_data.clientes_pf cli 
+              where   cli.cli_cpf = :cli_cpf
+                      and cli.cli_codigo != :cli_codigo';
+      $db->query($sql);
+      $db->bind(':cli_cpf', $cpf);
+      $db->bind(':cli_codigo', $cod_cli);
+      $row = $db->single();
+      if($db->rowCount() > 0){
         return true;
       } else {
         return false;
       }
     }    
+
+    private static function cnpjExists($cod_cli, $cnpj, $db) {
+      $sql = 'select  cli.cli_codigo 
+              from    cdc_data.clientes_pj cli 
+              where   cli.cli_cnpj = :cli_cnpj
+                      and cli.cli_codigo != :cli_codigo';
+      $db->query($sql);
+      $db->bind(':cli_cnpj', $cnpj);
+      $db->bind(':cli_codigo', $cod_cli);
+      $row = $db->single();
+      if($db->rowCount() > 0){
+        return true;
+      } else {
+        return false;
+      }
+    } 
+    
+    private static function emailExists($cod_cli, $email, $table, $db) {
+      $sql = 'select  cli.cli_codigo 
+              from    cdc_data.'.trim($table).' cli 
+              where   cli.cli_email = :cli_email
+                      and cli.cli_codigo != :cli_codigo';
+      $db->query($sql);
+      $db->bind(':cli_email', $email);
+      $db->bind(':cli_codigo', $cod_cli);
+      $row = $db->single();
+      if($db->rowCount() > 0){
+        return true;
+      } else {
+        return false;
+      }
+    }
   }
 ?>

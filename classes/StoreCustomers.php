@@ -236,11 +236,29 @@
       if (!$isValid) {
         echo ' => EMAIL INVALIDO ('.trim($obj->ema_cli).')'.$this->newLine;
         return false;
-      }      
+      }
 
-      // repeated cpf
+      // repeated cpf or cnpj
+      if (strlen(trim($obj->cpf_cnpj_cli)) <= 11) {
+        $isValid = CustomerBaseClass::cpfExists($obj->cod_cli, trim($obj->cpf_cnpj_cli), $this->db);
+        if (!$isValid) {
+          echo ' => CPF REPETIDO ('.trim($obj->cpf_cnpj_cli).')'.$this->newLine;
+          return false;
+        }
+      } else {
+        $isValid = CustomerBaseClass::cnpjExists($obj->cod_cli, trim($obj->cpf_cnpj_cli), $this->db);
+        if (!$isValid) {
+          echo ' => CNPJ REPETIDO ('.trim($obj->cpf_cnpj_cli).')'.$this->newLine;
+          return false;
+        }
+      }
 
       // repeated e-mail
+      $isValid = CustomerBaseClass::emailExists($obj->cod_cli, trim($obj->ema_cli), trim($this->table), $this->db);
+      if (!$isValid) {
+        echo ' => EMAIL REPETIDO ('.trim($obj->cpf_cnpj_cli).')'.$this->newLine;
+        return false;
+      }
 
       return true;
     }
