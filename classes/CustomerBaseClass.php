@@ -6,8 +6,8 @@
       if ($limit > 0) {
         $sqlLimit = 'limit '.$limit;
       }      
-      $sql = 'insert into clientes_cdc 
-              select	cli.*, '.$queryOrigem.', "N"
+      $sql = 'insert into centralar.clientes_cdc 
+              select	cli.cod_cli, '.$queryOrigem.', "N"
               from	  centralar.clientes cli
                       inner join(
                         select  	max(c.cod_cli) as cod_cli
@@ -68,9 +68,10 @@
       } else {
         $sqlLimit = '';
       }
-      $sql = 'select    c.*, ce.cli_codigo as customer_error
+      $sql = 'select    cli.*, ce.cli_codigo as customer_error
               from      cdc_data.clientes_errors ce
-                        inner join centralar.clientes_cdc c on c.cod_cli = ce.cli_codigo 
+                        inner join centralar.clientes_cdc cli_cdc on cli_cdc.cod_cli = ce.cli_codigo
+                        inner join centralar.clientes cli on cli.cod_cli = cli_cdc.cod_cli 
               where     typePerson = "'.$type.'"
               order by  cli_codigo 
               '.$sqlLimit;
