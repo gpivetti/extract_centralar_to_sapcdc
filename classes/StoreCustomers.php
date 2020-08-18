@@ -74,6 +74,7 @@
         $total = count($customers);
         echo '== INICIANDO PROCESSO =='.$this->newLine.$this->newLine;
         echo "TOTAL DE CLIENTES PARA IMPORTACAO: ".$total.$this->newLine.$this->newLine;
+        die();
 
         foreach($customers as $item => $obj) {
           $porcentagem = (($item+1)*100)/$total;

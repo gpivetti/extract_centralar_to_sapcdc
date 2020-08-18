@@ -49,7 +49,7 @@
       if ($limit > 0) {
         $sqlLimit = 'limit '.$limit;
       }
-      $sql = 'select    cli.*,
+      $sql = 'select    cli_cdc.*,
                         (select cli_codigo from cdc_data.clientes_errors ce where ce.cli_codigo = cli_cdc.cod_cli limit 1) as customer_error
               from      centralar.clientes_cdc cli_cdc
                         inner join centralar.clientes cli on cli.cod_cli = cli_cdc.cod_cli
