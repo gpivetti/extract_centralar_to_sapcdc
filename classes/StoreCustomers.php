@@ -149,12 +149,12 @@
           // Verifying if it will insert or udpate Customer (getting query)
           $customerExists = $this->customerExists($obj->cod_cli);
           if ($customerExists) { // update
-            echo " => UPDATE";
-            $insert       = true;
+            echo " => UPDATE";            
+            $update       = true;
             $sqlCustomer  = CustomerBaseClass::getUpdateQuery($this->table, $this->type, $obj);
           } else { // insert
             echo " => INSERT";
-            $update       = true;
+            $insert       = true;
             $sqlCustomer  = CustomerBaseClass::getInsertQuery($this->table, $this->type, $obj);
           }
           $this->db->query($sqlCustomer);
