@@ -62,7 +62,7 @@
       return $sql;
     }
 
-    public static function getCustomersWithError($limit = 0, $type) {
+    public static function getCustomersQueryWithError($limit = 0, $type) {
       if ($limit > 0) {
         $sqlLimit = 'limit '.$limit;
       } else {
@@ -353,7 +353,18 @@
       }
     }
 
-    public static function deleteErrorQuery($cod_cli, $db) {
+    public static function getCustumerData($cod_cli, $db) {
+      $sqlDelete = 'select * from centralar.clientes where cod_cli = '.$cod_cli;
+      $db->query($sqlDelete);
+      $row = $db->single();
+      if ($db->rowCount() > 0) {
+        return $row;
+      } else {
+        return false;
+      }
+    }
+
+    public static function deleteError($cod_cli, $db) {
       $sqlDelete = 'delete from cdc_data.clientes_errors where cli_codigo = '.$cod_cli;
       $db->query($sqlDelete);
       $db->execute();
@@ -365,7 +376,7 @@
       $db->execute();
     }
 
-    public static function processingErrorQuery($sqlCustomer, $error, $typeQuery, $cod_cli, $typePerson, $db) {
+    public static function processingError($sqlCustomer, $error, $typeQuery, $cod_cli, $typePerson, $db) {
       $sqlError = "
         insert into 
         cdc_data.clientes_errors 

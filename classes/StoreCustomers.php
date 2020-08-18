@@ -38,7 +38,7 @@
     }
 
     public function storeErrors($limit = 0) {
-      $sql = CustomerBaseClass::getCustomersWithError($limit, $this->type);
+      $sql = CustomerBaseClass::getCustomersQueryWithError($limit, $this->type);
       $this->storeCustomers($sql);
     }
 
@@ -74,13 +74,25 @@
         $total = count($customers);
         echo '== INICIANDO PROCESSO =='.$this->newLine.$this->newLine;
         echo "TOTAL DE CLIENTES PARA IMPORTACAO: ".$total.$this->newLine.$this->newLine;
-        die();
 
         foreach($customers as $item => $obj) {
           $porcentagem = (($item+1)*100)/$total;
           $porcentagem = number_format($porcentagem,2,'.','');
           echo "[".$porcentagem."%] Código: ".$obj->cod_cli;
           
+          // Retorna dados do cliente
+          print_r($obj);
+          $objCustomer = CustomerBaseClass::getCustumerData($obj->cod_cli, $this->db);
+          print_r($objCustomer);
+          if (!$objCustomer) {
+            continue;
+          }
+          else {
+            $obj_merged = (object) array_merge((array) $obj, (array) $objCustomer);
+            print_r($obj_merged);
+          }
+
+
           list($isValid, $noAddress, $insert, $update) = $this->validateAndStoreCustomer($obj);
 
           // Verifying store
@@ -162,7 +174,7 @@
           if (empty($errorQuery)) {
             CustomerBaseClass::changeToHiginized($obj->cod_cli, $this->db);
             if (!empty($obj->customer_error)) {              
-              CustomerBaseClass::deleteErrorQuery($obj->cod_cli, $this->db);
+              CustomerBaseClass::deleteError($obj->cod_cli, $this->db);
             }
           } else {
             $insert = false;
@@ -174,7 +186,7 @@
               } else {
                 $typeQuery = 'I';
               }
-              CustomerBaseClass::processingErrorQuery($sqlCustomer, $errorQuery, $typeQuery, $obj->cod_cli, $this->type, $this->db);
+              CustomerBaseClass::processingError($sqlCustomer, $errorQuery, $typeQuery, $obj->cod_cli, $this->type, $this->db);
             }
           }
         } else {
