@@ -398,7 +398,7 @@
       $db->execute();
     }
 
-    private static function cpfExists($cod_cli, $cpf, $db) {
+    public static function cpfExists($cod_cli, $cpf, $db) {
       $sql = 'select  cli.cli_codigo 
               from    cdc_data.clientes_pf cli 
               where   cli.cli_cpf = :cli_cpf
@@ -414,7 +414,7 @@
       }
     }    
 
-    private static function cnpjExists($cod_cli, $cnpj, $db) {
+    public static function cnpjExists($cod_cli, $cnpj, $db) {
       $sql = 'select  cli.cli_codigo 
               from    cdc_data.clientes_pj cli 
               where   cli.cli_cnpj = :cli_cnpj
@@ -430,7 +430,7 @@
       }
     } 
     
-    private static function emailExists($cod_cli, $email, $table, $db) {
+    public static function emailExists($cod_cli, $email, $table, $db) {
       $sql = 'select  cli.cli_codigo 
               from    cdc_data.'.trim($table).' cli 
               where   cli.cli_email = :cli_email
