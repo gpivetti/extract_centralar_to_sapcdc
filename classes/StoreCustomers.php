@@ -80,18 +80,14 @@
           $porcentagem = number_format($porcentagem,2,'.','');
           echo "[".$porcentagem."%] Código: ".$obj->cod_cli;
           
-          // Retorna dados do cliente
-          print_r($obj);
+          // Get Customer Data (merge with code)
           $objCustomer = CustomerBaseClass::getCustumerData($obj->cod_cli, $this->db);
-          print_r($objCustomer);
           if (!$objCustomer) {
             continue;
           }
           else {
-            $obj_merged = (object) array_merge((array) $obj, (array) $objCustomer);
-            print_r($obj_merged);
+            $obj = (object) array_merge((array) $obj, (array) $objCustomer);
           }
-
 
           list($isValid, $noAddress, $insert, $update) = $this->validateAndStoreCustomer($obj);
 
