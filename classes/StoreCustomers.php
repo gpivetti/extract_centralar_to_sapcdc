@@ -249,22 +249,22 @@
 
       // repeated cpf or cnpj
       if (strlen(trim($obj->cpf_cnpj_cli)) <= 11) {
-        $isValid = CustomerBaseClass::cpfExists($obj->cod_cli, trim($obj->cpf_cnpj_cli), $this->db);
-        if (!$isValid) {
+        $exists = CustomerBaseClass::cpfExists($obj->cod_cli, trim($obj->cpf_cnpj_cli), $this->db);
+        if ($exists) {
           echo ' => CPF REPETIDO ('.trim($obj->cpf_cnpj_cli).')'.$this->newLine;
           return false;
         }
       } else {
-        $isValid = CustomerBaseClass::cnpjExists($obj->cod_cli, trim($obj->cpf_cnpj_cli), $this->db);
-        if (!$isValid) {
+        $exists = CustomerBaseClass::cnpjExists($obj->cod_cli, trim($obj->cpf_cnpj_cli), $this->db);
+        if ($exists) {
           echo ' => CNPJ REPETIDO ('.trim($obj->cpf_cnpj_cli).')'.$this->newLine;
           return false;
         }
       }
 
       // repeated e-mail
-      $isValid = CustomerBaseClass::emailExists($obj->cod_cli, trim($obj->ema_cli), trim($this->table), $this->db);
-      if (!$isValid) {
+      $exists = CustomerBaseClass::emailExists($obj->cod_cli, trim($obj->ema_cli), trim($this->table), $this->db);
+      if ($exists) {
         echo ' => EMAIL REPETIDO ('.trim($obj->cpf_cnpj_cli).')'.$this->newLine;
         return false;
       }
