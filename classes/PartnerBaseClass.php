@@ -260,6 +260,12 @@
       return $sqlPartnerAddress;
     }
 
+    public static function changeToHiginized($cod_ins, $db) {
+      $sql = 'update centralar.parceiros_cdc set higienizado = "S" where cod_ins = '.$cod_ins;
+      $db->query($sql);
+      $db->execute();
+    }
+
     public static function deleteError($cod_ins, $db) {
       $sqlDelete = 'update centralar.parceiros_cdc set error = "N", error_msg = NULL where cod_cli = '.$cod_ins;
       $db->query($sqlDelete);

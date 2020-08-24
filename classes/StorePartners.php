@@ -50,7 +50,7 @@
       // Process Partners
       if (count($partners) > 0) {
         echo "TOTAL DE PARCEIROS PARA IMPORTACAO: ".count($partners).$this->newLine;
-        foreach($partners as $item => $obj){
+        foreach ($partners as $item => $obj) {
           echo $this->newLine."Código: ".$obj->cod_ins;
           
           // Verify Partner
@@ -67,9 +67,25 @@
           // Insert/Udate Partner
           $this->db->query($sqlPartner);
           $this->db->execute();
+          $errorQuery = $this->db->error();
 
-          // Partner Address
-          $this->storePartnerAddresses($obj->cod_ins, $obj->addresses);
+          // Store Addresses if no error
+          if (empty($errorQuery)) {
+            $errorQuery = $this->storePartnerAddresses($obj->cod_ins, $obj->addresses);
+          }
+
+          // Verifying errors after all
+          if (empty($errorQuery)) {
+            PartnerBaseClass::changeToHiginized($obj->cod_ins, $this->db);
+            if (!empty($obj->error)) {              
+              PartnerBaseClass::deleteError($obj->cod_ins, $this->db);
+            }
+          } else {
+            echo " => ERROR : ".trim($errorQuery)." (".trim($sqlPartner).')';
+            if (empty($obj->error)) {
+              PartnerBaseClass::processingError($errorQuery, $obj->cod_ins, $this->db);
+            }
+          } 
         }
       }
 
@@ -180,11 +196,10 @@
 
     private function getAddressOfPartner($cod_ins, $cod_cli = 0) {
       // Auxiliaries
-      $cep      = '';
-      $street   = '';
-      $num      = '';
-      $invalids = 0;
-      $address  = array();
+      $cep        = '';
+      $cep_cli    = '';
+      $invalids   = 0;
+      $address    = array();
 
       // Table: Instaladores
       $sqlAddressByPartner = PartnerBaseClass::getAddressQueryByPartner($cod_ins);
@@ -194,10 +209,24 @@
         $row = $this->serializeAddress($row);
         $isValid = $this->validateAddress($row);
         if ($isValid) {
-          $cep        = trim(strtoupper($row->zipCode));
-          $street     = trim(strtoupper($row->street));
-          $num        = trim(strtoupper($row->number));
+          $cep        = normalizaCep($row->zipCode);
           $address[]  = $row;
+        }
+      }
+
+      // Table: Clientes
+      $sqlAddressByCustomer = CustomerBaseClass::getAddressQueryByCustomer($cod_cli);
+      $this->db->query($sqlAddressByCustomer);
+      $row = $this->db->single();
+      if ($this->db->rowCount() > 0) {
+        $row = $this->serializeAddress($row);
+        $isValid = $this->validateAddress($row);
+        if ($isValid) {
+          $row->zipCode = normalizaCep($row->zipCode);
+          if ($row->zipCode != $cep) {
+            $cep_cli    = $row->zipCode;
+            $address[]  = $row;
+          }
         }
       }
 
@@ -208,7 +237,8 @@
         $row = $this->db->multiple();
         foreach($row as $item => $obj){
           $obj = $this->serializeAddress($obj);
-          if ($obj->zipCode != $cep or $obj->street != $street or $obj->number != $num) {
+          $obj->zipCode = normalizaCep($obj->zipCode);
+          if ($row->zipCode != $cep and $row->zipCode != $cep_cli){
             $isValid = $this->validateAddress($obj);
             if ($isValid) {
               $address[] = $obj;
