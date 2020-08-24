@@ -137,6 +137,7 @@
       $obj        = $this->serializeCustomer($obj);
       $errorMsg   = $this->validateCustomer($obj);
       if (empty($errorMsg)) {
+        $isValid = true;
         $address = $this->getAddressesOfCustomer($obj->cod_cli);
         if (count($address) > 0) {
           $obj->addresses = $address;
@@ -181,6 +182,7 @@
         }
       }
       else {
+        $isValid = false;
         CustomerBaseClass::processingError($errorMsg, $obj->cod_cli, $this->db);
       }
       return array($isValid, $noAddress, $insert, $update);
@@ -269,9 +271,9 @@
       }
 
       // is a partner?
-      $isParnter = CustomerBaseClass::emailExists($obj->cod_cli, trim($obj->ema_cli), trim($this->table), $this->db);
-      if ($exists) {
-        $errorMessage = 'CLIENTE PARCEIRO ('.trim($obj->cpf_cnpj_cli).')';
+      $cod_ins = CustomerBaseClass::isPartner(trim($obj->cpf_cnpj_cli), trim($obj->ema_cli), $this->db);
+      if ($cod_ins > 0) {
+        $errorMessage = 'CLIENTE PARCEIRO ('.$cod_ins.')';
         echo ' => '.$errorMessage.$this->newLine;
         return trim($errorMessage);
       }

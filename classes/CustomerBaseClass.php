@@ -420,5 +420,23 @@
         return false;
       }
     }
+
+    public static function isPartner($cpf, $email, $db) {
+      $sql = 'select 		ins_cdc.cod_ins 
+              from 		  centralar.instaladores ins
+                        inner join centralar.parceiros_cdc ins_cdc on ins.cod_ins = ins_cdc.cod_ins 
+              where 		ins.cpf_tit_con = :cpf_tit_con or UPPER(ins.ema_ins)  = :ema_ins
+              order by 	ins.cod_ins desc
+              limit		  1';
+      $db->query($sql);
+      $db->bind(':cpf_tit_con', trim($cpf));
+      $db->bind(':ema_ins', trim(strtoupper($email)));
+      $row = $db->single();
+      if($db->rowCount() > 0){
+        return $row->cod_ins;
+      } else {
+        return 0;
+      }
+    }
   }
 ?>
