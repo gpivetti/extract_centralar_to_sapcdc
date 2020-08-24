@@ -28,6 +28,18 @@
       $this->storePartners($sql);
     }
 
+    public function convertParnters($limit = 0) {
+      echo $sql = PartnerBaseClass::getPartnerToConvertQuery($limit);
+      $this->db->query($sql);
+      $this->db->execute(); 
+      $errorQuery = $this->db->error();
+      if (empty($errorQuery)) {
+        echo $this->newLine.$this->newLine.'SUCESSO'.$this->newLine;
+      } else {
+        echo $this->newLine.$this->newLine.$errorQuery.$this->newLine;
+      }
+    }
+
     private function storePartners($sql) {
       $inserted = 0;
       $updated  = 0;
@@ -79,12 +91,15 @@
 
       foreach($row as $item => $obj){
         $obj = $this->serializePartner($obj);
-        $isValid = $this->validatePartner($obj);
-        if ($isValid) {
-          // Addresses of Partner
-          $address = $this->getAddressOfPartner($obj->cod_ins);
+        $errorMsg = $this->validatePartner($obj);
+        if (empty($errorMsg)) {
+          // Get the last customer code by CPF
+          $cod_cli = PartnerBaseClass::isCustomer($obj->cpf_tit_con, $obs->ema_ins, $this->db);
+
+          // Get the addresses of partner and customer
+          $address = $this->getAddressOfPartner($obj->cod_ins, $cod_cli);
           if (count($address) > 0) {
-            $obj->address = $address;
+            $obj->addresses = $address;
             $partners[$obj->cod_ins] = $obj;
           } else {
             $noAddress++;
@@ -92,6 +107,7 @@
           }
         } else {
           $invalids++;
+          PartnerBaseClass::processingError($errorMsg, $obj->cod_ins, $this->db);
         }
       }
 
@@ -114,39 +130,55 @@
 
     private function serializePartner($obj) {
       $obj->cpf_tit_con           = somenteNumeros(trim($obj->cpf_tit_con));
-      $obj->ema_ins               = normaliza_email($obj->ema_ins);
       $obj->sex_ins               = normaliza_sexo($obj->sex_ins);
-      $obj->par_telefone          = normaliza_telefone($obj->zzf_dddfi.$obj->zzf_fonfi);
-      $obj->par_celular           = normaliza_telefone($obj->zzf_dddc1.$obj->zzf_fonc1);
-      $obj->par_celular_adicional = normaliza_telefone($obj->zzf_dddc2.$obj->zzf_fonc2);
-      $obj->par_tel_comercial     = normaliza_telefone($obj->zzf_dddc3.$obj->zzf_fonc3);
+      $obj->sen_ins               = normaliza_senha($obj->sen_ins);
+      $obj->par_telefone          = normaliza_telefone($obj->zzf_dddfi.$obj->zzf_fonfi, 'T');
+      $obj->par_celular           = normaliza_telefone($obj->zzf_dddc1.$obj->zzf_fonc1, 'M');
+      $obj->par_celular_adicional = normaliza_telefone($obj->zzf_dddc2.$obj->zzf_fonc2, 'M');
+      $obj->par_tel_comercial     = normaliza_telefone($obj->zzf_dddc3.$obj->zzf_fonc3, 'T');
+      $obj->ema_ins               = normaliza_email($obj->ema_ins);
+      $obj->dat_cad               = normaliza_data_cadastro($obj->dat_cad);
       $obj->par_dthr_cadastro     = retornaDataHoraCadastro($obj->dat_cad, $obj->hor_cad);
+      $obj->dat_nas_ins           = normaliza_data_nascimento($obj->dat_nas_ins, $obj->dat_cad);
+      
+      // Default phone
+      if (empty($obj->par_telefone) and empty($obj->par_celular) and 
+          empty($obj->par_celular_adicional) and empty($obj->par_tel_comercial)
+      ) {
+          $obj->par_telefone = '1136363636';  
+      }
+      
+      // Type of CC
       if (trim(strtoupper($obj->tipo_conta)) == 'PP') {
         $obj->tipo_conta = 'P';
       } else {
         $obj->tipo_conta = 'C';
       }
+
       return $obj;
     }
 
     private function validatePartner($obj) {
       $isValid = validaCPF(trim($obj->cpf_tit_con));
       if(!$isValid) {
-        echo 'Codigo '.$obj->cod_ins.' => CPF INVALIDO'.$this->newLine;
-        return false;
+        $errorMsg = 'CPF INVALIDO';
+        echo 'Codigo '.$obj->cod_ins.' => '.$errorMsg.$this->newLine;
+        return trim($errorMsg);
       }
 
       if (!empty($obj->cpf_ins)) {
         $isValid = validaCPF(trim($obj->cpf_ins));
         if(!$isValid) {
-          echo 'Codigo '.$obj->cod_ins.' => CPF DA CONTA INVALIDO'.$this->newLine;
-          return false;
+          $errorMsg = 'CPF DA CONTA INVALIDO';
+          echo 'Codigo '.$obj->cod_ins.' => '.$errorMsg.$this->newLine;
+          return trim($errorMsg);
         }
       }
-      return true;
+
+      return '';
     }
 
-    private function getAddressOfPartner($cod_ins) {
+    private function getAddressOfPartner($cod_ins, $cod_cli = 0) {
       // Auxiliaries
       $cep      = '';
       $street   = '';
@@ -165,7 +197,23 @@
           $cep        = trim(strtoupper($row->zipCode));
           $street     = trim(strtoupper($row->street));
           $num        = trim(strtoupper($row->number));
-          $address    = $row;
+          $address[]  = $row;
+        }
+      }
+
+      // If customer, insert the addresses
+      if ($cod_cli > 0) {
+        $sqlAddressByAddress= CustomerBaseClass::getAddressQueryByAddress($cod_cli); // mds_address
+        $this->db->query($sqlAddressByAddress);
+        $row = $this->db->multiple();
+        foreach($row as $item => $obj){
+          $obj = $this->serializeAddress($obj);
+          if ($obj->zipCode != $cep or $obj->street != $street or $obj->number != $num) {
+            $isValid = $this->validateAddress($obj);
+            if ($isValid) {
+              $address[] = $obj;
+            }
+          }
         }
       }
 

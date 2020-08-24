@@ -32,12 +32,6 @@
   $db = new Database();
   $customer = new StoreCustomers($db, $typeCustomer);
 
-  // Storing by errors
-  if (isset($array_parameters['error']) and $array_parameters['error'] == 'S') {
-    $customer->storeErrors($limit);
-    exit;
-  }
-
   // Storing just one customer
   if (isset($array_parameters['cliente']) and !empty($array_parameters['cliente'])) {
     $customer->storebyCustomerId($array_parameters['cliente']);

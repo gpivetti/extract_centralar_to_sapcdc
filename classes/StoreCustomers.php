@@ -37,11 +37,6 @@
       $this->storeCustomers($sql);
     }
 
-    public function storeErrors($limit = 0) {
-      $sql = CustomerBaseClass::getCustomersQueryWithError($limit, $this->type);
-      $this->storeCustomers($sql);
-    }
-
     public function convertCustomers($limit = 0) {
       echo $sql = CustomerBaseClass::getCustomerToConvertQuery($limit);
       $this->db->query($sql);
@@ -140,8 +135,8 @@
       $noAddress  = false;
 
       $obj        = $this->serializeCustomer($obj);
-      $isValid    = $this->validateCustomer($obj);
-      if ($isValid) {
+      $errorMsg   = $this->validateCustomer($obj);
+      if (empty($errorMsg)) {
         $address = $this->getAddressesOfCustomer($obj->cod_cli);
         if (count($address) > 0) {
           $obj->addresses = $address;
@@ -169,26 +164,24 @@
           // Verifying errors after all
           if (empty($errorQuery)) {
             CustomerBaseClass::changeToHiginized($obj->cod_cli, $this->db);
-            if (!empty($obj->customer_error)) {              
+            if (!empty($obj->error)) {              
               CustomerBaseClass::deleteError($obj->cod_cli, $this->db);
             }
           } else {
             $insert = false;
             $update = false;
             echo " => ERROR : ".trim($errorQuery)." (".trim($sqlCustomer).')';
-            if (empty($obj->customer_error)) {
-              if ($customerExists) {
-                $typeQuery = 'U';
-              } else {
-                $typeQuery = 'I';
-              }
-              CustomerBaseClass::processingError($sqlCustomer, $errorQuery, $typeQuery, $obj->cod_cli, $this->type, $this->db);
+            if (empty($obj->error)) {
+              CustomerBaseClass::processingError($errorQuery, $obj->cod_cli, $this->db);
             }
           }
         } else {
           $noAddress = true;
           echo ' => ENDERECOS INVALIDOS';
         }
+      }
+      else {
+        CustomerBaseClass::processingError($errorMsg, $obj->cod_cli, $this->db);
       }
       return array($isValid, $noAddress, $insert, $update);
     }
@@ -229,47 +222,61 @@
       if (strlen(trim($obj->cpf_cnpj_cli)) <= 11) {
         $isValid = validaCPF(trim($obj->cpf_cnpj_cli));
         if (!$isValid) {
-          echo ' => CPF INVALIDO ('.trim($obj->cpf_cnpj_cli).')'.$this->newLine;
-          return false;
+          $errorMessage = 'CPF INVALIDO ('.trim($obj->cpf_cnpj_cli).')';
+          echo ' => '.$errorMessage.$this->newLine;
+          return trim($errorMessage);
         }
       } else {
         $isValid = validaCNPJ(trim($obj->cpf_cnpj_cli));
         if (!$isValid) {
-          echo ' => CNPJ INVALIDO ('.trim($obj->cpf_cnpj_cli).')'.$this->newLine;
-          return false;
+          $errorMessage = 'CNPJ INVALIDO ('.trim($obj->cpf_cnpj_cli).')';
+          echo ' => '.$errorMessage.$this->newLine;
+          return trim($errorMessage);
         }
       }
 
       // invalid e-mail
       $isValid = validaEmail(trim($obj->ema_cli));
       if (!$isValid) {
-        echo ' => EMAIL INVALIDO ('.trim($obj->ema_cli).')'.$this->newLine;
-        return false;
+        $errorMessage = 'EMAIL INVALIDO ('.trim($obj->ema_cli).')';
+        echo ' => '.$errorMessage.$this->newLine;
+        return trim($errorMessage);
       }
 
       // repeated cpf or cnpj
       if (strlen(trim($obj->cpf_cnpj_cli)) <= 11) {
         $exists = CustomerBaseClass::cpfExists($obj->cod_cli, trim($obj->cpf_cnpj_cli), $this->db);
         if ($exists) {
-          echo ' => CPF REPETIDO ('.trim($obj->cpf_cnpj_cli).')'.$this->newLine;
-          return false;
+          $errorMessage = 'CPF REPETIDO ('.trim($obj->cpf_cnpj_cli).')';
+          echo ' => '.$errorMessage.$this->newLine;
+          return trim($errorMessage);
         }
       } else {
         $exists = CustomerBaseClass::cnpjExists($obj->cod_cli, trim($obj->cpf_cnpj_cli), $this->db);
         if ($exists) {
-          echo ' => CNPJ REPETIDO ('.trim($obj->cpf_cnpj_cli).')'.$this->newLine;
-          return false;
+          $errorMessage = 'CNPJ REPETIDO ('.trim($obj->cpf_cnpj_cli).')';
+          echo ' => '.$errorMessage.$this->newLine;
+          return trim($errorMessage);
         }
       }
 
       // repeated e-mail
       $exists = CustomerBaseClass::emailExists($obj->cod_cli, trim($obj->ema_cli), trim($this->table), $this->db);
       if ($exists) {
-        echo ' => EMAIL REPETIDO ('.trim($obj->cpf_cnpj_cli).')'.$this->newLine;
-        return false;
+        $errorMessage = 'EMAIL REPETIDO ('.trim($obj->cpf_cnpj_cli).')';
+        echo ' => '.$errorMessage.$this->newLine;
+        return trim($errorMessage);
       }
 
-      return true;
+      // is a partner?
+      $isParnter = CustomerBaseClass::emailExists($obj->cod_cli, trim($obj->ema_cli), trim($this->table), $this->db);
+      if ($exists) {
+        $errorMessage = 'CLIENTE PARCEIRO ('.trim($obj->cpf_cnpj_cli).')';
+        echo ' => '.$errorMessage.$this->newLine;
+        return trim($errorMessage);
+      }
+
+      return '';
     }
 
     private function getAddressesOfCustomer($cod_cli) {

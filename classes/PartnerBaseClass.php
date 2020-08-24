@@ -1,9 +1,30 @@
 <?php
   class PartnerBaseClass {
 
-    public static function getParnerQuery($limit = 0, $partner = '', $date_start = '', $date_end = '') {
+    public static function getPartnerToConvertQuery() {
+      if ($limit > 0) {
+        $sqlLimit = 'limit '.$limit;
+      }      
+      $sql = 'insert  into centralar.parceiros_cdc 
+              select 	ins.cod_ins, "N", "N", NULL
+              from	  instaladores ins
+              where	  ins.cadastro_status = "A"
+                      and exists (
+                        select 	p.revendedor 
+                        from 	centralar.pedidos p 
+                        where	p.revendedor = ins.cod_ins 
+                                and p.sta_ped in ("P","F","D","E")
+                                and p.dat_ped >= "'.BASE_DATE.'"
+                      )
+              order by ins.cod_ins 
+              '.$sqlLimit;
+      return $sql;
+    }
+
+    public static function getPartnerQuery($limit = 0, $partner = '', $date_start = '', $date_end = '') {
       $sqlLimit    = '';
       $sqlParner = '';
+      
       if (!empty($partner)) {
         $sqlParner = 'ins.cod_ins = '.$partner.' and ';
       }
@@ -13,9 +34,10 @@
       }
 
       $sql = 'select  ins.*
-              from    centralar.instaladores ins
+              from    centralar.parceiros_cdc ins_cdc
+                      inner join centralar.instaladores ins on ins.cod_ins = ins_cdc.cod_ins
               where   '.$sqlParner.'
-                      '.self::getBaseOfWhereQuery($date_start, $date_end).'
+                      ins_cdc.higienizado = "N"
               order by ins.cod_ins 
               '.$sqlLimit;
       return $sql;
@@ -233,23 +255,34 @@
       return $sqlPartnerAddress;
     }
 
-    private static function getBaseOfWhereQuery($date_start = '', $date_end = '') {
-      if (empty($date_start) or (!empty($date_start) and $date_start < BASE_DATE)) {
-        $date_start = BASE_DATE;
-      }
-      if (!empty($date_end)){
-        $whereDate = "p.dat_ped BETWEEN '".$date_start."' and '".$date_end."'";
+    public static function deleteError($cod_ins, $db) {
+      $sqlDelete = 'update centralar.parceiros_cdc set error = "N", error_msg = NULL where cod_cli = '.$cod_ins;
+      $db->query($sqlDelete);
+      $db->execute();
+    }
+
+    public static function processingError($error_msg, $cod_ins, $db) {
+      $sqlError = 'update centralar.parceiros_cdc set error = "S", error_msg = "'.addslashes(trim($error_msg)).'" where cod_ins = '.$cod_ins;
+      $db->query($sqlError);
+      $db->execute();
+    }
+
+    public static function isCustomer($cpf, $email, $db) {
+      $sql = 'select 		cli_cdc.cod_cli 
+              from 		  centralar.clientes cli
+                        inner join centralar.clientes_cdc cli_cdc on cli.cod_cli = cli_cdc.cod_cli 
+              where 		cli.cpf_cnpj_cli = :cpf_cnpj_cli or UPPER(cli.ema_cli)  = :ema_cli
+              order by 	cli.cod_cli desc
+              limit		  1';
+      $db->query($sql);
+      $db->bind(':cpf_cnpj_cli', trim($cpf));
+      $db->bind(':ema_cli', trim(strtoupper($email)));
+      $row = $db->single();
+      if($db->rowCount() > 0){
+        return $row->cod_cli;
       } else {
-        $whereDate = "p.dat_ped >= '".$date_start."'";
+        return 0;
       }
-      return 'ins.cadastro_status = "A"
-              and exists (
-                select 	p.revendedor 
-                from 	  centralar.pedidos p 
-                where	  p.revendedor = ins.cod_ins 
-                        and p.sta_ped in ("P","F","D","E")
-                        and '.trim($whereDate).'
-              )';
     }
   }
 ?>

@@ -7,7 +7,7 @@
         $sqlLimit = 'limit '.$limit;
       }      
       $sql = 'insert into centralar.clientes_cdc 
-              select	cli.cod_cli, '.$queryOrigem.', "N"
+              select	cli.cod_cli, '.$queryOrigem.', "N", "N", NULL
               from	  centralar.clientes cli
                       inner join(
                         select  	max(c.cod_cli) as cod_cli
@@ -49,8 +49,7 @@
       if ($limit > 0) {
         $sqlLimit = 'limit '.$limit;
       }
-      $sql = 'select    cli_cdc.*,
-                        (select cli_codigo from cdc_data.clientes_errors ce where ce.cli_codigo = cli_cdc.cod_cli limit 1) as customer_error
+      $sql = 'select    cli_cdc.*
               from      centralar.clientes_cdc cli_cdc
                         inner join centralar.clientes cli on cli.cod_cli = cli_cdc.cod_cli
               where     '.$sqlCustomer.'
@@ -58,22 +57,6 @@
                         '.self::getWhereOfQueryByPeriod($date_start, $date_end).'
                         cli_cdc.higienizado = "N"
               order by  cli_cdc.cod_cli 
-              '.$sqlLimit;
-      return $sql;
-    }
-
-    public static function getCustomersQueryWithError($limit = 0, $type) {
-      if ($limit > 0) {
-        $sqlLimit = 'limit '.$limit;
-      } else {
-        $sqlLimit = '';
-      }
-      $sql = 'select    cli.*, ce.cli_codigo as customer_error
-              from      cdc_data.clientes_errors ce
-                        inner join centralar.clientes_cdc cli_cdc on cli_cdc.cod_cli = ce.cli_codigo
-                        inner join centralar.clientes cli on cli.cod_cli = cli_cdc.cod_cli 
-              where     typePerson = "'.$type.'"
-              order by  cli_codigo 
               '.$sqlLimit;
       return $sql;
     }
@@ -365,7 +348,7 @@
     }
 
     public static function deleteError($cod_cli, $db) {
-      $sqlDelete = 'delete from cdc_data.clientes_errors where cli_codigo = '.$cod_cli;
+      $sqlDelete = 'update centralar.clientes_cdc set error = "N", error_msg = NULL where cod_cli = '.$cod_cli;
       $db->query($sqlDelete);
       $db->execute();
     }
@@ -376,24 +359,8 @@
       $db->execute();
     }
 
-    public static function processingError($sqlCustomer, $error, $typeQuery, $cod_cli, $typePerson, $db) {
-      $sqlError = "
-        insert into 
-        cdc_data.clientes_errors 
-        (
-          cli_codigo,
-          typePerson,
-          typeQuery,
-          query,
-          message
-        )
-        values (
-          ".trim($cod_cli).",
-          '".trim($typePerson)."',
-          '".trim($typeQuery)."',
-          '".substr(trim(addslashes($sqlCustomer)), 0, 19999)."',
-          '".substr(trim(addslashes($error)), 0, 19999)."'
-        )";
+    public static function processingError($error_msg, $cod_cli, $db) {
+      $sqlError = 'update centralar.clientes_cdc set error = "S", error_msg = "'.addslashes(trim($error_msg)).'" where cod_cli = '.$cod_cli;
       $db->query($sqlError);
       $db->execute();
     }

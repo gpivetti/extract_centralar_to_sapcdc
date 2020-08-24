@@ -13,7 +13,12 @@
 
   // Starting classes
   $db = new Database();
+  $partner  = new StorePartners($db);
   $customer = new StoreCustomers($db, $typeCustomer);
   
+  echo "Converting Partners...\n\n";
+  $partner->convertParnters($limit);
+
+  echo "\n\nConverting Customers...\n\n";
   $customer->convertCustomers($limit);
 ?>
