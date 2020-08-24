@@ -13,18 +13,18 @@
       $this->newLine = "<br>";
     }
 
-    public function storeAll($limit = 0) {
-      $sql = PartnerBaseClass::getPartnerQuery($limit, $this->type, "");
+    public function storeAll($limit = 0, $withErrors = false) {
+      $sql = PartnerBaseClass::getPartnerQuery($limit, '', '', '', $withErrors);
       $this->storePartners($sql);
     }
 
     public function storeByPartnerId($cod_ins) {
-      $sql = PartnerBaseClass::getPartnerQuery(0, $this->type, $cod_ins);
+      $sql = PartnerBaseClass::getPartnerQuery(0, $cod_ins);
       $this->storePartners($sql);
     }
 
-    public function storeByPeriod($data_start, $data_end, $limit = 0) {
-      $sql = PartnerBaseClass::getPartnerQuery($limit, $this->type, '', $data_start, $data_end);
+    public function storeByPeriod($data_start, $data_end, $limit = 0, $withErrors = false) {
+      $sql = PartnerBaseClass::getPartnerQuery($limit, '', $data_start, $data_end, $withErrors);
       $this->storePartners($sql);
     }
 

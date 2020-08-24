@@ -36,9 +36,10 @@
       return $sql;
     }
 
-    public static function getCustomerQuery($limit = 0, $type, $customer_or_origin = '', $date_start = '', $date_end = '') {
+    public static function getCustomerQuery($limit = 0, $type, $customer_or_origin = '', $date_start = '', $date_end = '', $withErrors = false) {
       $sqlLimit    = '';
       $sqlCustomer = '';
+
       if (!empty($customer_or_origin)) {
         if (is_numeric($customer_or_origin)) {
           $sqlCustomer = 'cli_cdc.cod_cli = '.$customer_or_origin. ' and ';
@@ -46,9 +47,15 @@
           $sqlCustomer = 'cli_cdc.cliente_origem = "'.trim(strtoupper($customer_or_origin)).'" and ';
         }
       }
+
       if ($limit > 0) {
         $sqlLimit = 'limit '.$limit;
       }
+
+      if (!$withErrors) {
+        $sqlError = ' and cli_cdc.error = "N"';
+      }
+
       $sql = 'select    cli_cdc.*
               from      centralar.clientes_cdc cli_cdc
                         inner join centralar.clientes cli on cli.cod_cli = cli_cdc.cod_cli
@@ -56,6 +63,7 @@
                         '.self::getWhereOfQueryByType($type).'
                         '.self::getWhereOfQueryByPeriod($date_start, $date_end).'
                         cli_cdc.higienizado = "N"
+                        '.$sqlError.'
               order by  cli_cdc.cod_cli 
               '.$sqlLimit;
       return $sql;

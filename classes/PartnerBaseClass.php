@@ -21,7 +21,7 @@
       return $sql;
     }
 
-    public static function getPartnerQuery($limit = 0, $partner = '', $date_start = '', $date_end = '') {
+    public static function getPartnerQuery($limit = 0, $partner = '', $date_start = '', $date_end = '', $withErrors = false) {
       $sqlLimit    = '';
       $sqlParner = '';
       
@@ -33,11 +33,16 @@
         $sqlLimit = 'limit '.$limit;
       }
 
+      if (!$withErrors) {
+        $sqlError = ' and ins_cdc.error = "N"';
+      }
+
       $sql = 'select  ins.*
               from    centralar.parceiros_cdc ins_cdc
                       inner join centralar.instaladores ins on ins.cod_ins = ins_cdc.cod_ins
               where   '.$sqlParner.'
                       ins_cdc.higienizado = "N"
+                      '.$sqlError.'
               order by ins.cod_ins 
               '.$sqlLimit;
       return $sql;

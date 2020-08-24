@@ -21,7 +21,15 @@
   $end = '';
   if (isset($array_parameters['end']) and !empty($array_parameters['end'])) {
     $end = $array_parameters['end'];
-  }    
+  }
+
+  // Store with errors
+  if (isset($array_parameters['errors']) and trim(strtoupper($array_parameters['errors'])) == 'S') {
+    $withErrors = true;
+  } 
+  else {
+    $withErrors = false;
+  }
 
   // Starting classes
   $db = new Database();
@@ -35,10 +43,10 @@
 
   // Storing by period
   if (!empty($start) or !empty($end)) {
-    $partner->storeByPeriod($start, $end, $limit);
+    $partner->storeByPeriod($start, $end, $limit, $withErrors);
     exit;
   }
   
   // Storing all
-  $partner->storeAll($limit);
+  $partner->storeAll($limit, $withErrors);
 ?>

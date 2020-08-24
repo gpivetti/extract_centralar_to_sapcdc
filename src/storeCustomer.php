@@ -28,6 +28,14 @@
     $end = $array_parameters['end'];
   }    
 
+  // Store with errors
+  if (isset($array_parameters['errors']) and trim(strtoupper($array_parameters['errors'])) == 'S') {
+    $withErrors = true;
+  } 
+  else {
+    $withErrors = false;
+  }
+
   // Starting classes
   $db = new Database();
   $customer = new StoreCustomers($db, $typeCustomer);
@@ -40,16 +48,16 @@
       
   // Storing by origin
   if (isset($array_parameters['origin']) and !empty($array_parameters['origin'])) {
-    $customer->storeByCustomerOrigin($array_parameters['origin'], $limit);
+    $customer->storeByCustomerOrigin($array_parameters['origin'], $limit, $withErrors);
     exit;
   } 
 
   // Storing by period
   if (!empty($start) or !empty($end)) {
-    $customer->storeByPeriod($start, $end, $limit);
+    $customer->storeByPeriod($start, $end, $limit, $withErrors);
     exit;
   }
   
   // Storing all
-  $customer->storeAll($limit);
+  $customer->storeAll($limit, $withErrors);
 ?>

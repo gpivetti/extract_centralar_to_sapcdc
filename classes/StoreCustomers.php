@@ -17,8 +17,8 @@
       $this->newLine = "\n";
     }
 
-    public function storeAll($limit = 0) {
-      $sql = CustomerBaseClass::getCustomerQuery($limit, $this->type, "");
+    public function storeAll($limit = 0, $withErrors = false) {
+      $sql = CustomerBaseClass::getCustomerQuery($limit, $this->type, '', '', '', $withErrors);
       $this->storeCustomers($sql);
     }
 
@@ -27,13 +27,13 @@
       $this->storeCustomers($sql);
     }
 
-    public function storeByCustomerOrigin($origin, $limit = 0) {
-      $sql = CustomerBaseClass::getCustomerQuery($limit, $this->type, $origin);
+    public function storeByCustomerOrigin($origin, $limit = 0, $withErrors = false) {
+      $sql = CustomerBaseClass::getCustomerQuery($limit, $this->type, $origin, '', '', $withErrors);
       $this->storeCustomers($sql, $origin);
     }
 
-    public function storeByPeriod($data_start, $data_end, $limit = 0) {
-      $sql = CustomerBaseClass::getCustomerQuery($limit, $this->type, '', $data_start, $data_end);
+    public function storeByPeriod($data_start, $data_end, $limit = 0, $withErrors = false) {
+      $sql = CustomerBaseClass::getCustomerQuery($limit, $this->type, '', $data_start, $data_end, $withErrors);
       $this->storeCustomers($sql);
     }
 
