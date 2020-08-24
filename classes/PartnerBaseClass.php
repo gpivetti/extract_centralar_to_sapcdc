@@ -26,7 +26,7 @@
       $sqlParner = '';
       
       if (!empty($partner)) {
-        $sqlParner = 'ins.cod_ins = '.$partner.' and ';
+        $sqlPartner = 'ins.cod_ins = '.$partner.' and ';
       }
 
       if ($limit > 0) {
@@ -40,7 +40,7 @@
       $sql = 'select  ins.*
               from    centralar.parceiros_cdc ins_cdc
                       inner join centralar.instaladores ins on ins.cod_ins = ins_cdc.cod_ins
-              where   '.$sqlParner.'
+              where   '.$sqlPartner.'
                       ins_cdc.higienizado = "N"
                       '.$sqlError.'
               order by ins.cod_ins 
