@@ -24,7 +24,7 @@
   }
 
   // Store with errors
-  if (isset($array_parameters['errors']) and trim(strtoupper($array_parameters['errors'])) == 'S') {
+  if (isset($array_parameters['error']) and trim(strtoupper($array_parameters['error'])) == 'S') {
     $withErrors = true;
   } 
   else {

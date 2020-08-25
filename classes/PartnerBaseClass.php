@@ -26,7 +26,10 @@
       $sqlParner = '';
       
       if (!empty($partner)) {
+        $withErrors = true;
         $sqlPartner = 'ins.cod_ins = '.$partner.' and ';
+      } else {
+        $sqlPartner = 'ins_cdc.higienizado = "N" and ';
       }
 
       if ($limit > 0) {
@@ -34,14 +37,15 @@
       }
 
       if (!$withErrors) {
-        $sqlError = ' and ins_cdc.error = "N"';
+        $sqlError = 'ins_cdc.error = "N"';
+      } else {
+        $sqlError = '';
       }
 
-      $sql = 'select  ins.*
+      $sql = 'select  ins.*, ins_cdc.error
               from    centralar.parceiros_cdc ins_cdc
                       inner join centralar.instaladores ins on ins.cod_ins = ins_cdc.cod_ins
               where   '.$sqlPartner.'
-                      ins_cdc.higienizado = "N"
                       '.$sqlError.'
               order by ins.cod_ins 
               '.$sqlLimit;
@@ -53,7 +57,8 @@
         insert into cdc_data.".$table."
         (
           par_codigo,
-					par_codigo_erp,
+          par_codigo_erp,
+          par_codigo_erp_cli,
 					par_nome,
 					par_cpf,
 					par_funcao,					
@@ -91,15 +96,17 @@
 					par_dthr_ativacao
         )
         values(
-          ".$obj->keyTOTVS.",
-          ".$obj->nom_tit_con.",
-          ".$obj->cpf_tit_con.",
+          ".$obj->cod_ins.",
+          '".$obj->keyTOTVS."',
+          ".(empty($obj->cliKeyTotvs) ? 'NULL' : "'".trim($obj->cliKeyTotvs)."'").",
+          '".$obj->nom_tit_con."',
+          '".$obj->cpf_tit_con."',
           'Parceiro',
-          ".$obj->rg_ins.",
-          ".$obj->UFEmissor.",
-          ".$obj->sex_ins.",
-          ".$obj->gostaria_ser_chamado.",
-          ".$obj->contato_principal.",
+          '".$obj->rg_ins."',
+          '".$obj->UFEmissor."',
+          '".$obj->sex_ins."',
+          '".$obj->gostaria_ser_chamado."',
+          '".$obj->contato_principal."',
           (
             select 		GROUP_CONCAT(seg.nome)
             from		  centralar.instaladores_segmentos iseg
@@ -136,28 +143,28 @@
                       and ifab.autorizado = 'S'
             group by 	ifab.cod_ins 
           ),
-          ".$obj->motivo_compra_concorrente.",
-          ".$obj->interesses.",
-          ".$obj->perfil_clientes.",
-          ".$obj->dat_nas_ins.",
-          ".$obj->UFNatural.",
-          ".$obj->par_telefone.",
-          ".$obj->par_celular.",
-          ".$obj->par_celular_adicional.",
-          ".$obj->par_tel_comercial.",
-          ".$obj->ema_ins.",
-          ".$obj->sen_ins.",
-          ".$obj->tipo_conta."
-          bancos.ID_TOTVS,
-          bancos.BANCO,
-          ".$obj->nro_agencia_correto.",
-          ".$obj->conta_correto.",
-          ".$obj->cpf_ins.",
-          ".$obj->pis_pasesp.",
+          '".$obj->motivo_compra_concorrente."',
+          '".$obj->interesses."',
+          '".$obj->perfil_clientes."',
+          '".$obj->dat_nas_ins."',
+          '".$obj->UFNatural."',
+          '".$obj->par_telefone."',
+          '".$obj->par_celular."',
+          '".$obj->par_celular_adicional."',
+          '".$obj->par_tel_comercial."',
+          '".$obj->ema_ins."',
+          '".$obj->sen_ins."',
+          '".$obj->tipo_conta."',
+          (select ID_TOTVS from centralar.bancos_relacao1 where ID = ".$obj->banco_novo."),
+          (select BANCO from centralar.bancos_relacao1 where ID = ".$obj->banco_novo."),
+          '".$obj->nro_agencia_correto."',
+          '".$obj->conta_correto."',
+          '".$obj->cpf_ins."',
+          '".$obj->pis_pasesp."',
           'A',
-          ".(empty($obj->par_dthr_cadastro) ? 'NULL' : "'".trim($obj->par_dthr_cadastro))."'".",
-          ".$obj->data_atualizacao_cadastral.",
-          ".$obj->data_atualizacao_cadastral."
+          ".(empty($obj->par_dthr_cadastro) ? 'NULL' : "'".trim($obj->par_dthr_cadastro)."'").",
+          '".$obj->data_atualizacao_cadastral."',
+          '".$obj->data_atualizacao_cadastral."'
         );";
       return $sqlPartner;
     }
@@ -166,15 +173,16 @@
       $sqlPartner = "
         update 	cdc_data.".$table." as par
                 left join centralar.bancos_relacao1 as bancos on bancos.ID = ".$obj->banco_novo."						
-        set		  par.par_codigo_erp					      = ".$obj->keyTOTVS.",
-                par.par_nome						          = ".$obj->nom_tit_con.",
-                par.par_cpf							          = ".$obj->cpf_tit_con.",
+        set		  par.par_codigo_erp					      = '".$obj->keyTOTVS."',
+                par_codigo_erp_cli                = ".(empty($obj->cliKeyTotvs) ? 'NULL' : "'".trim($obj->cliKeyTotvs)."'").",
+                par.par_nome						          = '".$obj->nom_tit_con."',
+                par.par_cpf							          = '".$obj->cpf_tit_con."',
                 par.par_funcao						        = 'Parceiro',
-                par.par_rg							          = ".$obj->rg_ins.",
-                par.par_rg_ufemissor				      = ".$obj->UFEmissor.",
-                par.par_sexo						          = ".$obj->sex_ins.",
-                par.par_tratamento					      = ".$obj->gostaria_ser_chamado.",
-                par.par_contato_principal			    = ".$obj->contato_principal.",
+                par.par_rg							          = '".$obj->rg_ins."',
+                par.par_rg_ufemissor				      = '".$obj->UFEmissor."',
+                par.par_sexo						          = '".$obj->sex_ins."',
+                par.par_tratamento					      = '".$obj->gostaria_ser_chamado."',
+                par.par_contato_principal			    = '".$obj->contato_principal."',
                 par.par_segmentos					        = (
                                                     select 		GROUP_CONCAT(seg.nome)
                                                     from		  centralar.instaladores_segmentos iseg
@@ -211,27 +219,27 @@
                                                               and ifab.autorizado = 'S'
                                                     group by 	ifab.cod_ins 
                                                   ),
-                par.par_motivo_compra_concorrente	= ".$obj->motivo_compra_concorrente.",
-                par.par_interesses					      = ".$obj->interesses.",
-                par.par_perfil_clientes				    = ".$obj->perfil_clientes.",
-                par.par_data_nasc					        = ".$obj->dat_nas_ins.",
-                par.par_uf_naturalidade				    = ".$obj->UFNatural.",
-                par.par_telefone					        = ".$obj->par_telefone.",
-                par.par_celular						        = ".$obj->par_celular.",
-                par.par_celular_adicional			    = ".$obj->par_celular_adicional.",
-                par.par_tel_comercial				      = ".$obj->par_tel_comercial.",
-                par.par_email						          = ".$obj->ema_ins.",
-                par.par_senha						          = ".$obj->sen_ins.",
-                par.par_tipo_conta					      = ".$obj->tipo_conta."
+                par.par_motivo_compra_concorrente	= '".$obj->motivo_compra_concorrente."',
+                par.par_interesses					      = '".$obj->interesses."',
+                par.par_perfil_clientes				    = '".$obj->perfil_clientes."',
+                par.par_data_nasc					        = '".$obj->dat_nas_ins."',
+                par.par_uf_naturalidade				    = '".$obj->UFNatural."',
+                par.par_telefone					        = '".$obj->par_telefone."',
+                par.par_celular						        = '".$obj->par_celular."',
+                par.par_celular_adicional			    = '".$obj->par_celular_adicional."',
+                par.par_tel_comercial				      = '".$obj->par_tel_comercial."',
+                par.par_email						          = '".$obj->ema_ins."',
+                par.par_senha						          = '".$obj->sen_ins."',
+                par.par_tipo_conta					      = '".$obj->tipo_conta."',
                 par.par_cod_banco					        = bancos.ID_TOTVS,
                 par.par_nome_banco					      = bancos.BANCO,
-                par.par_num_agencia					      = ".$obj->nro_agencia_correto.",
-                par.par_num_conta					        = ".$obj->conta_correto.",
-                par.par_cpf_conta					        = ".$obj->cpf_ins.",
-                par.par_pis_pasesp					      = ".$obj->pis_pasesp.",
-                par.par_dthr_cadastro				      = ".(empty($obj->par_dthr_cadastro) ? 'NULL' : "'".trim($obj->par_dthr_cadastro))."'".",
-                par.par_dthr_atualizacao			    = ".$obj->data_atualizacao_cadastral.",
-                par.par_dthr_ativacao				      = ".$obj->data_atualizacao_cadastral."
+                par.par_num_agencia					      = '".$obj->nro_agencia_correto."',
+                par.par_num_conta					        = '".$obj->conta_correto."',
+                par.par_cpf_conta					        = '".$obj->cpf_ins."',
+                par.par_pis_pasesp					      = '".$obj->pis_pasesp."',
+                par.par_dthr_cadastro				      = ".(empty($obj->par_dthr_cadastro) ? 'NULL' : "'".trim($obj->par_dthr_cadastro)."'").",
+                par.par_dthr_atualizacao			    = '".$obj->data_atualizacao_cadastral."',
+                par.par_dthr_ativacao				      = '".$obj->data_atualizacao_cadastral."'
         where	par.par_codigo = ".$obj->cod_ins;
       return $sqlPartner;
     }
@@ -241,8 +249,8 @@
         select    ins.cod_ins,
                   ins.end_ins as street,
                   ins.bai_ins as neighborhood,
-                  ins.end_ins as `number`,
-                  NULL, as referencePoint,
+                  ins.num_ins as `number`,
+                  NULL as referencePoint,
                   ins.com_ins as complement,
                   centralar.somenteNumeros(ins.cep_ins) as zipCode,
                   ins.cid_ins as city,
@@ -267,7 +275,7 @@
     }
 
     public static function deleteError($cod_ins, $db) {
-      $sqlDelete = 'update centralar.parceiros_cdc set error = "N", error_msg = NULL where cod_cli = '.$cod_ins;
+      $sqlDelete = 'update centralar.parceiros_cdc set error = "N", error_msg = NULL where cod_ins = '.$cod_ins;
       $db->query($sqlDelete);
       $db->execute();
     }
@@ -279,10 +287,11 @@
     }
 
     public static function isCustomer($cpf, $email, $db) {
-      $sql = 'select 		cli_cdc.cod_cli 
+      $sql = 'select 		cli.cod_cli, cli.keyTotvs 
               from 		  centralar.clientes cli
-                        inner join centralar.clientes_cdc cli_cdc on cli.cod_cli = cli_cdc.cod_cli 
-              where 		cli.cpf_cnpj_cli = :cpf_cnpj_cli or UPPER(cli.ema_cli)  = :ema_cli
+              where 		(cli.cpf_cnpj_cli = :cpf_cnpj_cli or UPPER(cli.ema_cli)  = :ema_cli)
+                        and cli.keyTOTVS != ""
+                        and not cli.keyTOTVS is null
               order by 	cli.cod_cli desc
               limit		  1';
       $db->query($sql);
@@ -290,9 +299,9 @@
       $db->bind(':ema_cli', trim(strtoupper($email)));
       $row = $db->single();
       if($db->rowCount() > 0){
-        return $row->cod_cli;
+        return array($row->cod_cli, $row->keyTotvs);
       } else {
-        return 0;
+        return array(0, '');
       }
     }
   }

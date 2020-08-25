@@ -172,9 +172,7 @@
             $insert = false;
             $update = false;
             echo " => ERROR : ".trim($errorQuery)." (".trim($sqlCustomer).')';
-            if (empty($obj->error)) {
-              CustomerBaseClass::processingError($errorQuery, $obj->cod_cli, $this->db);
-            }
+            CustomerBaseClass::processingError($errorQuery, $obj->cod_cli, $this->db);
           }
         } else {
           $noAddress = true;
@@ -384,7 +382,7 @@
 
     private function deleteCustomerAddresses($cod_cli) {
       $addressTable = $this->table . '_enderecos';
-      $sqlDelete = 'delete from cdc_data.'.$addressTable.' where cli_codigo = '.$cod_cli;
+      $sqlDelete = 'delete from cdc_data.'.trim($addressTable).' where cli_codigo = '.$cod_cli;
       $this->db->query($sqlDelete);
       $this->db->execute();
     }

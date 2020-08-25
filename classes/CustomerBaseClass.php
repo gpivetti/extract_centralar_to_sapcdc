@@ -39,10 +39,13 @@
     public static function getCustomerQuery($limit = 0, $type, $customer_or_origin = '', $date_start = '', $date_end = '', $withErrors = false) {
       $sqlLimit    = '';
       $sqlCustomer = '';
+      $sqlHiginized = 'cli_cdc.higienizado = "N"';
 
       if (!empty($customer_or_origin)) {
         if (is_numeric($customer_or_origin)) {
-          $sqlCustomer = 'cli_cdc.cod_cli = '.$customer_or_origin. ' and ';
+          $withErrors   = true;
+          $sqlHiginized = '';
+          $sqlCustomer  = 'cli_cdc.cod_cli = '.$customer_or_origin. ' and ';
         } else {
           $sqlCustomer = 'cli_cdc.cliente_origem = "'.trim(strtoupper($customer_or_origin)).'" and ';
         }
@@ -53,7 +56,10 @@
       }
 
       if (!$withErrors) {
-        $sqlError = ' and cli_cdc.error = "N"';
+        if (trim($sqlHiginized) != '') $sqlError = ' and ';
+        $sqlError .= 'cli_cdc.error = "N"';
+      } else {
+        $sqlError = '';
       }
 
       $sql = 'select    cli_cdc.*
@@ -62,7 +68,7 @@
               where     '.$sqlCustomer.'
                         '.self::getWhereOfQueryByType($type).'
                         '.self::getWhereOfQueryByPeriod($date_start, $date_end).'
-                        cli_cdc.higienizado = "N"
+                        '.$sqlHiginized.'
                         '.$sqlError.'
               order by  cli_cdc.cod_cli 
               '.$sqlLimit;

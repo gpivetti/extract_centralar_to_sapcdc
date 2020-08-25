@@ -8,9 +8,8 @@
 
     public function __construct($db) {
       $this->db = $db;
-      $this->type = $type;
-      $this->$table = 'instaladores';
-      $this->newLine = "<br>";
+      $this->table = "parceiros";
+      $this->newLine = "\n";
     }
 
     public function storeAll($limit = 0, $withErrors = false) {
@@ -57,11 +56,11 @@
           if ($this->partnerExists($obj->cod_ins)) { // update
             $updated++;
             echo " => UPDATE";
-            $sqlPartner = PartnerBaseClass::getUpdateQuery($this->table, $this->type, $obj);
+            echo $sqlPartner = PartnerBaseClass::getUpdateQuery($this->table, $this->type, $obj);
           } else { // insert
             $inserted++;
             echo " => INSERT";
-            $sqlPartner = PartnerBaseClass::getInsertQuery($this->table, $this->type, $obj);
+            echo $sqlPartner = PartnerBaseClass::getInsertQuery($this->table, $this->type, $obj);
           }
 
           // Insert/Udate Partner
@@ -82,35 +81,36 @@
             }
           } else {
             echo " => ERROR : ".trim($errorQuery)." (".trim($sqlPartner).')';
-            if (empty($obj->error)) {
-              PartnerBaseClass::processingError($errorQuery, $obj->cod_ins, $this->db);
-            }
+            PartnerBaseClass::processingError($errorQuery, $obj->cod_ins, $this->db);
           } 
         }
       }
 
       echo $this->newLine.$this->newLine;
-      echo ' ---------------------------------------------- '.$this->newLine;
+      echo '---------------------------------------------- '.$this->newLine;
       echo 'INSERIDOS: '.$inserted.$this->newLine;
       echo 'ATUALIZADOS: '.$updated.$this->newLine;
-      echo ' ---------------------------------------------- ';
+      echo '---------------------------------------------- '.$this->newLine;
     }
 
     private function getPartners($sql) {
+      echo $this->newLine.'BUSCANDO DADOS: '.$this->newLine.$sql.$this->newLine.$this->newLine;
       $this->db->query($sql);
       $row = $this->db->multiple();
-      
+
       // Auxiliaries
       $noAddress  = 0;
       $invalids   = 0;
       $partners  = array();
 
       foreach($row as $item => $obj){
+        echo $this->newLine.'Codigo: '.$obj->cod_ins;
         $obj = $this->serializePartner($obj);
         $errorMsg = $this->validatePartner($obj);
         if (empty($errorMsg)) {
           // Get the last customer code by CPF
-          $cod_cli = PartnerBaseClass::isCustomer($obj->cpf_tit_con, $obs->ema_ins, $this->db);
+          list($cod_cli, $cliKeyTotvs) = PartnerBaseClass::isCustomer($obj->cpf_tit_con, $obj->ema_ins, $this->db);
+          $obj->cliKeyTotvs = $cliKeyTotvs;
 
           // Get the addresses of partner and customer
           $address = $this->getAddressOfPartner($obj->cod_ins, $cod_cli);
@@ -119,7 +119,8 @@
             $partners[$obj->cod_ins] = $obj;
           } else {
             $noAddress++;
-            echo 'Codigo '.$obj->cod_ins.' => ENDERECO INVALIDO'.$this->newLine;
+            echo ' => ENDERECO INVALIDO'.$this->newLine;
+            PartnerBaseClass::processingError('ENDERECO INVALIDO', $obj->cod_ins, $this->db);
           }
         } else {
           $invalids++;
@@ -145,6 +146,8 @@
     }
 
     private function serializePartner($obj) {
+      echo ' => SERIALIZE';
+
       $obj->cpf_tit_con           = somenteNumeros(trim($obj->cpf_tit_con));
       $obj->sex_ins               = normaliza_sexo($obj->sex_ins);
       $obj->sen_ins               = normaliza_senha($obj->sen_ins);
@@ -175,10 +178,12 @@
     }
 
     private function validatePartner($obj) {
+      echo ' => VALIDATE';
+
       $isValid = validaCPF(trim($obj->cpf_tit_con));
       if(!$isValid) {
         $errorMsg = 'CPF INVALIDO';
-        echo 'Codigo '.$obj->cod_ins.' => '.$errorMsg.$this->newLine;
+        echo ' => '.$errorMsg.$this->newLine;
         return trim($errorMsg);
       }
 
@@ -186,7 +191,7 @@
         $isValid = validaCPF(trim($obj->cpf_ins));
         if(!$isValid) {
           $errorMsg = 'CPF DA CONTA INVALIDO';
-          echo 'Codigo '.$obj->cod_ins.' => '.$errorMsg.$this->newLine;
+          echo ' => '.$errorMsg.$this->newLine;
           return trim($errorMsg);
         }
       }
@@ -238,7 +243,7 @@
         foreach($row as $item => $obj){
           $obj = $this->serializeAddress($obj);
           $obj->zipCode = normalizaCep($obj->zipCode);
-          if ($row->zipCode != $cep and $row->zipCode != $cep_cli){
+          if ($obj->zipCode != $cep and $obj->zipCode != $cep_cli){
             $isValid = $this->validateAddress($obj);
             if ($isValid) {
               $address[] = $obj;
@@ -268,18 +273,13 @@
 
     private function storePartnerAddresses($cod_ins, $addresses) {
       $addressTable = $this->table . '_enderecos';
-
-      // Delete Address
-      $sqlDelete = 'delete from cdc_data.'.$addressTable.' where cli_codigo = '.$cod_ins;
-      $this->db->query($sqlDelete);
-      $this->db->execute();
-      
+      $this->deletePartnerAddresses($cod_ins);
       foreach ($addresses as $key => $value) {
         $sqlAddress = "
           insert into 
-          cdc_data.".trim($addressTable)." 
+          cdc_data.".trim($addressTable)."
           (
-            cli_codigo,
+            par_codigo,
             cod_end,
             endereco,
             bairro,
@@ -308,13 +308,25 @@
           )";
           $this->db->query($sqlAddress);
           $this->db->execute();
+          if (!empty($this->db->error())) {
+            $this->deletePartnerAddresses($cod_ins);
+            return $this->db->error();
+          }
       }
+      return '';
+    }
+
+    private function deletePartnerAddresses($cod_ins = 0) {
+      $addressTable = $this->table . '_enderecos';
+      $sqlDelete = 'delete from cdc_data.'.trim($addressTable).' where par_codigo = '.$cod_ins;
+      $this->db->query($sqlDelete);
+      $this->db->execute();
     }
 
     private function partnerExists($cod_ins) {
-      $sql = 'select cli.cli_codigo from cdc_data.'.$this->table.' cli where cli.cli_codigo = :cli_codigo ';
+      $sql = 'select par.par_codigo from cdc_data.'.$this->table.' par where par.par_codigo = :par_codigo ';
       $this->db->query($sql);
-      $this->db->bind(':cli_codigo', $cod_ins);
+      $this->db->bind(':par_codigo', $cod_ins);
       $row = $this->db->single();
       if($this->db->rowCount() > 0){
         return true;
