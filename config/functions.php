@@ -127,13 +127,14 @@ function normaliza_data_nascimento($dat_nas_cli = '', $date_reference = '') {
   }
   else if ($dat_nas_cli >= $date_reference) {
     $date_array = explode('-', $dat_nas_cli);
-    return '1970-'.$date_array[1].'-'.$date_array[2];
+    return '1972-'.$date_array[1].'-'.$date_array[2];
   } else {
     return $dat_nas_cli;
   }
 }
 
-function normaliza_email($emailString = '') {
+function normaliza_email($emailString = '', $defaultEmail = '') {
+  $defaultDomain = '@EMAIL.COM';
   $email = trim($emailString);
   if (!empty($email)) {
     // Replace ';' before @ (possibly it was a typo)
@@ -151,20 +152,61 @@ function normaliza_email($emailString = '') {
     $email = str_replace('@.', '@', $email);
     $email = (trim(substr($email,-1)) == '.') ? trim(substr($email,0,(strlen($email)-1))) : trim($email);
 
-    // Adding .com
+    // Spliting E-mail
     $emailArray = explode('@', trim($email));
-    if (empty($emailArray[0])) {
-      $emailArray[0] = getGUID();
+
+    // Veryfing last char
+    $exitValiation = false;
+    $pattern       = "/[A-Za-z0-9]/i";
+    $emailArray[0] = trim($emailArray[0]);
+    while(!$exitValiation) {
+      $lastChar = trim(strtoupper(substr($emailArray[0],-1)));
+      if (!empty($lastChar) and preg_match($pattern, trim($lastChar)) !== 1) {
+        $emailArray[0] = trim(substr($emailArray[0],0,(strlen($emailArray[0])-1)));
+      } else {
+        $exitValiation = true;
+      }
     }
+
+    // Veryfing first element (e-mail name)
+    if (empty($emailArray[0])) {
+      if (empty($defaultEmail)) {
+        $emailArray[0] = getGUID();
+      } else {
+        $emailArray[0] = $defaultEmail;
+      }
+    }
+
+    // Veryfing second element (e-mail domain)
     if (count($emailArray) >= 2) {
+      // Adding .com
       if (strpos($emailArray[1], '.') === false) {
         if (strlen(trim($emailArray[1])) <= 1) {
-          $emailArray[1] = trim($emailArray[1]) . 'email';
+          $emailArray[1] = trim($emailArray[1]) . 'EMAIL';
         }
-        $email = trim($emailArray[0]) . '@' . trim($emailArray[1]) . '.com';
+        $email = trim(strtoupper($emailArray[0])) . '@' . trim(strtoupper($emailArray[1])) . '.COM';
+      } else {
+        $email = trim($emailArray[0]) . '@' . trim($emailArray[1]);
+      }
+      
+      // Veryfing Last 2 chars
+      $lastChars = trim(strtoupper(substr($email,-2)));
+      if (trim($lastChars) == '.C') {
+        $email = trim(strtoupper($email)) . 'OM';
+      }
+      else if (trim($lastChars) == '.B') {
+        $email = trim(strtoupper($email)) . 'R';
+      }
+
+      // If domain dont matching, add a default one
+      $emailArray = explode('@', trim($email));
+      $pattern = "/^([a-z0-9]+)([._-]([0-9a-z]+))*([.]([a-z0-9]+){2,4})$/i";
+      if (!isset($emailArray[1]) or empty($emailArray[1]) or preg_match($pattern, trim($emailArray[1])) !== 1) {
+        $email = strtoupper($emailArray[0]) . trim($defaultDomain);
       }
     } else {
-      $email = $emailArray[0] . '@email.com';
+      // If dont have domain on the second element, add a default one
+      $email = strtoupper($emailArray[0]) . trim($defaultDomain);
     }
   }
   return $email;
@@ -186,7 +228,8 @@ function normalizaCep($cep = null) {
 
 function validaEmail($email) {
   $email = trim($email);
-  if (empty($email) or !filter_var($email, FILTER_VALIDATE_EMAIL) or empty($email)) {
+  $pattern = "/^([a-z0-9]+)([._-]([0-9a-z_-]+))*@([a-z0-9]+)([._-]([0-9a-z]+))*([.]([a-z0-9]+){2,4})$/i";
+  if (empty($email) or preg_match($pattern, $email) !== 1) {
     return false;
   } else {
     return true;

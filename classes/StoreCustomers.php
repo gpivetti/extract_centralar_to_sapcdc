@@ -223,14 +223,14 @@
         $isValid = validaCPF(trim($obj->cpf_cnpj_cli));
         if (!$isValid) {
           $errorMessage = 'CPF INVALIDO ('.trim($obj->cpf_cnpj_cli).')';
-          echo ' => '.$errorMessage.$this->newLine;
+          echo ' => '.$errorMessage;
           return trim($errorMessage);
         }
       } else {
         $isValid = validaCNPJ(trim($obj->cpf_cnpj_cli));
         if (!$isValid) {
           $errorMessage = 'CNPJ INVALIDO ('.trim($obj->cpf_cnpj_cli).')';
-          echo ' => '.$errorMessage.$this->newLine;
+          echo ' => '.$errorMessage;
           return trim($errorMessage);
         }
       }
@@ -239,7 +239,7 @@
       $isValid = validaEmail(trim($obj->ema_cli));
       if (!$isValid) {
         $errorMessage = 'EMAIL INVALIDO ('.trim($obj->ema_cli).')';
-        echo ' => '.$errorMessage.$this->newLine;
+        echo ' => '.$errorMessage;
         return trim($errorMessage);
       }
 
@@ -248,14 +248,14 @@
         $exists = CustomerBaseClass::cpfExists($obj->cod_cli, trim($obj->cpf_cnpj_cli), $this->db);
         if ($exists) {
           $errorMessage = 'CPF REPETIDO ('.trim($obj->cpf_cnpj_cli).')';
-          echo ' => '.$errorMessage.$this->newLine;
+          echo ' => '.$errorMessage;
           return trim($errorMessage);
         }
       } else {
         $exists = CustomerBaseClass::cnpjExists($obj->cod_cli, trim($obj->cpf_cnpj_cli), $this->db);
         if ($exists) {
           $errorMessage = 'CNPJ REPETIDO ('.trim($obj->cpf_cnpj_cli).')';
-          echo ' => '.$errorMessage.$this->newLine;
+          echo ' => '.$errorMessage;
           return trim($errorMessage);
         }
       }
@@ -263,8 +263,8 @@
       // repeated e-mail
       $exists = CustomerBaseClass::emailExists($obj->cod_cli, trim($obj->ema_cli), trim($this->table), $this->db);
       if ($exists) {
-        $errorMessage = 'EMAIL REPETIDO ('.trim($obj->cpf_cnpj_cli).')';
-        echo ' => '.$errorMessage.$this->newLine;
+        $errorMessage = 'EMAIL REPETIDO ('.trim($obj->ema_cli).')';
+        echo ' => '.$errorMessage;
         return trim($errorMessage);
       }
 
@@ -272,7 +272,7 @@
       $cod_ins = CustomerBaseClass::isPartner(trim($obj->cpf_cnpj_cli), trim($obj->ema_cli), $this->db);
       if ($cod_ins > 0) {
         $errorMessage = 'CLIENTE PARCEIRO ('.$cod_ins.')';
-        echo ' => '.$errorMessage.$this->newLine;
+        echo ' => '.$errorMessage;
         return trim($errorMessage);
       }
 

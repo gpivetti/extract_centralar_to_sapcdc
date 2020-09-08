@@ -27,9 +27,9 @@
       
       if (!empty($partner)) {
         $withErrors = true;
-        $sqlPartner = 'ins.cod_ins = '.$partner.' and ';
+        $sqlPartner = 'ins.cod_ins = '.$partner;
       } else {
-        $sqlPartner = 'ins_cdc.higienizado = "N" and ';
+        $sqlPartner = 'ins_cdc.higienizado = "N"';
       }
 
       if ($limit > 0) {
@@ -37,7 +37,7 @@
       }
 
       if (!$withErrors) {
-        $sqlError = 'ins_cdc.error = "N"';
+        $sqlError = 'and ins_cdc.error = "N"';
       } else {
         $sqlError = '';
       }

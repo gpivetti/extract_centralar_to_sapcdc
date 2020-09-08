@@ -39,7 +39,7 @@
     public static function getCustomerQuery($limit = 0, $type, $customer_or_origin = '', $date_start = '', $date_end = '', $withErrors = false) {
       $sqlLimit    = '';
       $sqlCustomer = '';
-      $sqlHiginized = 'cli_cdc.higienizado = "N"';
+      $sqlHiginized = 'and cli_cdc.higienizado = "N"';
 
       if (!empty($customer_or_origin)) {
         if (is_numeric($customer_or_origin)) {
@@ -322,9 +322,9 @@
 
     private static function getWhereOfQueryByType($type) {
       if ($type == 'PF') {
-        return 'length(cli.cpf_cnpj_cli) <= 11 and ';
+        return 'length(cli.cpf_cnpj_cli) <= 11 ';
       } else {
-        return 'length(cli.cpf_cnpj_cli) > 11 and ';
+        return 'length(cli.cpf_cnpj_cli) > 11 ';
       }
     }
 
@@ -338,13 +338,13 @@
         } else {
           $date = "ped.dat_ped >= '".$date_start."'";
         }
-        return 'cli_cdc.cod_cli in (
+        return 'and cli_cdc.cod_cli in (
                   select 	ped.cod_cli 
                   from	  centralar.pedidos ped
                   where	  ped.sta_ped in ("P","F","D","E")
                           and '.trim($date).'
                           and ped.cod_cli = cli_cdc.cod_cli
-                ) and ';
+                )';
       } else {
         return '';
       }

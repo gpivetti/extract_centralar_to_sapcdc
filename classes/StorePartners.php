@@ -196,6 +196,14 @@
         }
       }
 
+      // invalid e-mail
+      $isValid = validaEmail(trim($obj->ema_ins));
+      if (!$isValid) {
+        $errorMessage = 'EMAIL INVALIDO ('.trim($obj->ema_ins).')';
+        echo ' => '.$errorMessage.$this->newLine;
+        return trim($errorMessage);
+      }
+
       return '';
     }
 
