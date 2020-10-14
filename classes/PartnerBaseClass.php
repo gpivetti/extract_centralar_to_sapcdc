@@ -18,6 +18,9 @@
                                 and p.sta_ped in ("P","F","D","E")
                                 and p.dat_ped >= "'.BASE_DATE.'"
                       )
+                      and ins.cod_ins not in (
+                        select ins.cod_ins from centralar.parceiros_cdc cdc where cdc.cod_ins = ins.cod_ins
+                      )
               order by ins.cod_ins 
               '.$sqlLimit;
       return $sql;
