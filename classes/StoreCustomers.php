@@ -212,6 +212,36 @@
         }
       }
 
+      // Juridic Penson
+      if ($this->type == 'PJ') {
+        // Fantasy Name
+        if (empty($obj->fan_cli)) {
+            if (!empty($obj->nom_cli)) {
+              $obj->fan_cli = $obj->nom_cli;
+            } else {
+              $obj->fan_cli = $obj->raz_cli;
+            }
+        }
+
+        // Social Name
+        if (empty($obj->raz_cli)) {
+          if (!empty($obj->nom_cli) and trim($obj->nom_cli) != trim($obj->fan_cli)) {
+            $obj->fan_cli = $obj->nom_cli;
+          } else {
+            $obj->fan_cli = $obj->fan_cli;
+          }
+        }
+
+        // Responsable Name
+        if (trim($obj->nom_cli) == trim($obj->raz_cli)) {
+          $obj->nom_cli = $obj->fan_cli;
+        }
+        if (empty($obj->nom_cli)) {
+          $obj->nom_cli = $obj->raz_cli;
+        }
+      }
+
+
       return $obj;
     }
 

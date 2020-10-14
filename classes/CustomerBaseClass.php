@@ -1,11 +1,13 @@
 <?php
   class CustomerBaseClass {
 
-    public static function getCustomerToConvertQuery() {
+    public static function getCustomerToConvertQuery($limit = 0) {
       $queryOrigem = '('.self::getCustomerOriginQuery('cli.cod_cli').')';
       if ($limit > 0) {
         $sqlLimit = 'limit '.$limit;
-      }      
+      } else {
+        $sqlLimit = '';
+      }
       $sql = 'insert into centralar.clientes_cdc 
               select	cli.cod_cli, '.$queryOrigem.', "N", "N", NULL
               from	  centralar.clientes cli
@@ -129,6 +131,8 @@
             cli_codigo,
             cli_codigo_erp,
             cli_nome,
+            cli_nome_resp,
+            cli_razao_social,
             cli_cnpj,
             cli_insc_est,
             cli_isento,
@@ -150,7 +154,9 @@
           values(
             ".$obj->cod_cli.",
             '".$obj->keyTOTVS."',
+            '".addslashes($obj->fan_cli)."',
             '".addslashes($obj->nom_cli)."',
+            '".addslashes($obj->raz_cli)."',
             '".$obj->cpf_cnpj_cli."',
             '".$obj->rg_ie_cli."',
             ".(($obj->rg_ie_cli == 'ISENTO') ? 'true' : 'false').",
@@ -200,7 +206,9 @@
         $sqlCustomer = "
           update 	cdc_data.".$table." as c_customer
           set		  c_customer.cli_codigo_erp 	      = '".$obj->keyTOTVS."',
-                  c_customer.cli_nome 				      = '".addslashes($obj->nom_cli)."',
+                  c_customer.cli_nome               = '".addslashes($obj->fan_cli)."',
+                  c_customer.cli_nome_resp          = '".addslashes($obj->nom_cli)."',
+                  c_customer.cli_razao_social       = '".addslashes($obj->raz_cli)."',
                   c_customer.cli_cnpj				        = '".$obj->cpf_cnpj_cli."',
                   c_customer.cli_insc_est	  	      = '".$obj->rg_ie_cli."',
                   c_customer.cli_isento	  	        = ".(($obj->rg_ie_cli == 'ISENTO') ? 'true' : 'false').",
@@ -351,8 +359,8 @@
     }
 
     public static function getCustumerData($cod_cli, $db) {
-      $sqlDelete = 'select * from centralar.clientes where cod_cli = '.$cod_cli;
-      $db->query($sqlDelete);
+      $sql = 'select * from centralar.clientes where cod_cli = '.$cod_cli;
+      $db->query($sql);
       $row = $db->single();
       if ($db->rowCount() > 0) {
         return $row;

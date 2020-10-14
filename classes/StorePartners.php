@@ -26,8 +26,8 @@
       $sql = PartnerBaseClass::getPartnerQuery($limit, '', $data_start, $data_end, $withErrors);
       $this->storePartners($sql);
     }
-
-    public function convertParnters($limit = 0) {
+    
+    public function convertPartners($limit = 0) {
       echo $sql = PartnerBaseClass::getPartnerToConvertQuery($limit);
       $this->db->query($sql);
       $this->db->execute(); 
@@ -37,7 +37,7 @@
       } else {
         echo $this->newLine.$this->newLine.$errorQuery.$this->newLine;
       }
-    }
+    } 
 
     private function storePartners($sql) {
       $inserted = 0;

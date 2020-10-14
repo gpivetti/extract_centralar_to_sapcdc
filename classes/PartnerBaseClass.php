@@ -1,10 +1,12 @@
 <?php
   class PartnerBaseClass {
 
-    public static function getPartnerToConvertQuery() {
+    public static function getPartnerToConvertQuery($limit = 0) {
       if ($limit > 0) {
         $sqlLimit = 'limit '.$limit;
-      }      
+      } else {
+        $sqlLimit = '';
+      } 
       $sql = 'insert  into centralar.parceiros_cdc 
               select 	ins.cod_ins, "N", "N", NULL
               from	  instaladores ins
@@ -63,7 +65,8 @@
 					par_cpf,
 					par_funcao,					
 					par_rg,
-					par_rg_ufemissor,
+          par_rg_ufemissor,
+          par_rg_orgaoemissor,
 					par_sexo,
 					par_tratamento,
 					par_contato_principal,
@@ -103,7 +106,8 @@
           '".$obj->cpf_tit_con."',
           'Parceiro',
           '".$obj->rg_ins."',
-          '".$obj->UFEmissor."',
+          '".strtoupper($obj->UFEmissor)."',
+          '".strtoupper($obj->OrgaoEmissor)."',
           '".$obj->sex_ins."',
           '".$obj->gostaria_ser_chamado."',
           '".$obj->contato_principal."',
@@ -179,7 +183,8 @@
                 par.par_cpf							          = '".$obj->cpf_tit_con."',
                 par.par_funcao						        = 'Parceiro',
                 par.par_rg							          = '".$obj->rg_ins."',
-                par.par_rg_ufemissor				      = '".$obj->UFEmissor."',
+                par.par_rg_ufemissor				      = '".strtoupper($obj->UFEmissor)."',
+                par.par_rg_orgaoemissor				    = '".strtoupper($obj->OrgaoEmissor)."',
                 par.par_sexo						          = '".$obj->sex_ins."',
                 par.par_tratamento					      = '".$obj->gostaria_ser_chamado."',
                 par.par_contato_principal			    = '".$obj->contato_principal."',
