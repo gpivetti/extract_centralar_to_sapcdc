@@ -115,35 +115,35 @@
           '".$obj->gostaria_ser_chamado."',
           '".$obj->contato_principal."',
           (
-            select 		GROUP_CONCAT(seg.nome)
+            select 		GROUP_CONCAT(seg.titulo_cdc)
             from		  centralar.instaladores_segmentos iseg
                       inner join centralar.segmentos seg on seg.id = iseg.cod_segmento
             where		  iseg.cod_ins = ".$obj->cod_ins." 
             group by 	iseg.cod_ins 
           ),
           (
-            select 		GROUP_CONCAT(con.nome)
+            select 		GROUP_CONCAT(con.titulo_cdc)
             from		  centralar.instaladores_concorrentes icon 
                       inner join centralar.concorrentes con on con.id = icon.cod_concorrente 
             where		  icon.cod_ins = ".$obj->cod_ins." 
             group by 	icon.cod_ins 
           ),
           (
-            select 		GROUP_CONCAT(cat.titulo)
+            select 		GROUP_CONCAT(cat.titulo_cdc)
             from	  	centralar.instaladores_categorias icat 
                       inner join centralar.categoria cat on cat.cod_cat = icat.cod_cat 
             where		  icat.cod_ins = ".$obj->cod_ins." 
             group by 	icat.cod_ins 
           ),
           (
-            select 		GROUP_CONCAT(fab.nome)
+            select 		GROUP_CONCAT(fab.titulo_cdc)
             from		  centralar.instaladores_fabricantes ifab
                       inner join centralar.fabricante fab on fab.codigo = ifab.cod_fab 
             where		  ifab.cod_ins = ".$obj->cod_ins."
             group by 	ifab.cod_ins 
           ),
           (
-            select 		GROUP_CONCAT(fab.nome)
+            select 		GROUP_CONCAT(fab.titulo_cdc)
             from		  centralar.instaladores_fabricantes ifab
                       inner join centralar.fabricante fab on fab.codigo = ifab.cod_fab 
             where		  ifab.cod_ins = ".$obj->cod_ins."
@@ -192,35 +192,35 @@
                 par.par_tratamento					      = '".$obj->gostaria_ser_chamado."',
                 par.par_contato_principal			    = '".$obj->contato_principal."',
                 par.par_segmentos					        = (
-                                                    select 		GROUP_CONCAT(seg.nome)
+                                                    select 		GROUP_CONCAT(seg.titulo_cdc)
                                                     from		  centralar.instaladores_segmentos iseg
                                                               inner join centralar.segmentos seg on seg.id = iseg.cod_segmento
                                                     where		  iseg.cod_ins = ".$obj->cod_ins." 
                                                     group by 	iseg.cod_ins 
                                                   ),
                 par.par_concorrentes				      = (
-                                                    select 		GROUP_CONCAT(con.nome)
+                                                    select 		GROUP_CONCAT(con.titulo_cdc)
                                                     from		  centralar.instaladores_concorrentes icon 
                                                               inner join centralar.concorrentes con on con.id = icon.cod_concorrente 
                                                     where		  icon.cod_ins = ".$obj->cod_ins." 
                                                     group by 	icon.cod_ins 
                                                   ),
                 par.par_categorias					      = (
-                                                    select 		GROUP_CONCAT(cat.titulo)
+                                                    select 		GROUP_CONCAT(cat.titulo_cdc)
                                                     from	  	centralar.instaladores_categorias icat 
                                                               inner join centralar.categoria cat on cat.cod_cat = icat.cod_cat 
                                                     where		  icat.cod_ins = ".$obj->cod_ins." 
                                                     group by 	icat.cod_ins 
                                                   ),
                 par.par_marcas						        = (
-                                                    select 		GROUP_CONCAT(fab.nome)
+                                                    select 		GROUP_CONCAT(fab.titulo_cdc)
                                                     from		  centralar.instaladores_fabricantes ifab
                                                               inner join centralar.fabricante fab on fab.codigo = ifab.cod_fab 
                                                     where		  ifab.cod_ins = ".$obj->cod_ins."
                                                     group by 	ifab.cod_ins 
                                                   ),
                 par.par_marcas_autorizadas			  = (
-                                                    select 		GROUP_CONCAT(fab.nome)
+                                                    select 		GROUP_CONCAT(fab.titulo_cdc)
                                                     from		  centralar.instaladores_fabricantes ifab
                                                               inner join centralar.fabricante fab on fab.codigo = ifab.cod_fab 
                                                     where		  ifab.cod_ins = ".$obj->cod_ins."
